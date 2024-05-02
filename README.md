@@ -3,7 +3,7 @@
 
 ## Usefull Commands
 
-ssh pi@raspberrypi.local
+`ssh pi@raspberrypi.local`
 
 pi@raspberrypi  -- Traffic Light
 
