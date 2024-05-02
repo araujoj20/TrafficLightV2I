@@ -1,0 +1,780 @@
+ASN_MODULE_SRCS=	\
+	SPATEM.c	\
+	ItsPduHeader.c	\
+	StationID.c	\
+	ReferencePosition.c	\
+	DeltaReferencePosition.c	\
+	Longitude.c	\
+	Latitude.c	\
+	Altitude.c	\
+	AltitudeValue.c	\
+	AltitudeConfidence.c	\
+	DeltaLongitude.c	\
+	DeltaLatitude.c	\
+	DeltaAltitude.c	\
+	PosConfidenceEllipse.c	\
+	PathPoint.c	\
+	PathDeltaTime.c	\
+	PtActivation.c	\
+	PtActivationType.c	\
+	PtActivationData.c	\
+	AccelerationControl.c	\
+	SemiAxisLength.c	\
+	CauseCode.c	\
+	CauseCodeType.c	\
+	SubCauseCodeType.c	\
+	TrafficConditionSubCauseCode.c	\
+	AccidentSubCauseCode.c	\
+	RoadworksSubCauseCode.c	\
+	HumanPresenceOnTheRoadSubCauseCode.c	\
+	WrongWayDrivingSubCauseCode.c	\
+	AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.c	\
+	AdverseWeatherCondition-AdhesionSubCauseCode.c	\
+	AdverseWeatherCondition-VisibilitySubCauseCode.c	\
+	AdverseWeatherCondition-PrecipitationSubCauseCode.c	\
+	SlowVehicleSubCauseCode.c	\
+	StationaryVehicleSubCauseCode.c	\
+	HumanProblemSubCauseCode.c	\
+	EmergencyVehicleApproachingSubCauseCode.c	\
+	HazardousLocation-DangerousCurveSubCauseCode.c	\
+	HazardousLocation-SurfaceConditionSubCauseCode.c	\
+	HazardousLocation-ObstacleOnTheRoadSubCauseCode.c	\
+	HazardousLocation-AnimalOnTheRoadSubCauseCode.c	\
+	CollisionRiskSubCauseCode.c	\
+	SignalViolationSubCauseCode.c	\
+	RescueAndRecoveryWorkInProgressSubCauseCode.c	\
+	DangerousEndOfQueueSubCauseCode.c	\
+	DangerousSituationSubCauseCode.c	\
+	VehicleBreakdownSubCauseCode.c	\
+	PostCrashSubCauseCode.c	\
+	Curvature.c	\
+	CurvatureValue.c	\
+	CurvatureConfidence.c	\
+	CurvatureCalculationMode.c	\
+	Heading.c	\
+	HeadingValue.c	\
+	HeadingConfidence.c	\
+	LanePosition.c	\
+	ClosedLanes.c	\
+	HardShoulderStatus.c	\
+	DrivingLaneStatus.c	\
+	PerformanceClass.c	\
+	SpeedValue.c	\
+	SpeedConfidence.c	\
+	VehicleMass.c	\
+	Speed.c	\
+	DriveDirection.c	\
+	EmbarkationStatus.c	\
+	LongitudinalAcceleration.c	\
+	LongitudinalAccelerationValue.c	\
+	AccelerationConfidence.c	\
+	LateralAcceleration.c	\
+	LateralAccelerationValue.c	\
+	VerticalAcceleration.c	\
+	VerticalAccelerationValue.c	\
+	StationType.c	\
+	ExteriorLights.c	\
+	DangerousGoodsBasic.c	\
+	DangerousGoodsExtended.c	\
+	SpecialTransportType.c	\
+	LightBarSirenInUse.c	\
+	HeightLonCarr.c	\
+	PosLonCarr.c	\
+	PosPillar.c	\
+	PosCentMass.c	\
+	RequestResponseIndication.c	\
+	SpeedLimit.c	\
+	StationarySince.c	\
+	Temperature.c	\
+	TrafficRule.c	\
+	WheelBaseVehicle.c	\
+	TurningRadius.c	\
+	PosFrontAx.c	\
+	PositionOfOccupants.c	\
+	PositioningSolutionType.c	\
+	VehicleIdentification.c	\
+	WMInumber.c	\
+	VDS.c	\
+	EnergyStorageType.c	\
+	VehicleLength.c	\
+	VehicleLengthValue.c	\
+	VehicleLengthConfidenceIndication.c	\
+	VehicleWidth.c	\
+	PathHistory.c	\
+	EmergencyPriority.c	\
+	InformationQuality.c	\
+	RoadType.c	\
+	SteeringWheelAngle.c	\
+	SteeringWheelAngleValue.c	\
+	SteeringWheelAngleConfidence.c	\
+	TimestampIts.c	\
+	VehicleRole.c	\
+	YawRate.c	\
+	YawRateValue.c	\
+	YawRateConfidence.c	\
+	ProtectedZoneType.c	\
+	RelevanceDistance.c	\
+	RelevanceTrafficDirection.c	\
+	TransmissionInterval.c	\
+	ValidityDuration.c	\
+	ActionID.c	\
+	ItineraryPath.c	\
+	ProtectedCommunicationZone.c	\
+	Traces.c	\
+	NumberOfOccupants.c	\
+	SequenceNumber.c	\
+	PositionOfPillars.c	\
+	RestrictedTypes.c	\
+	EventHistory.c	\
+	EventPoint.c	\
+	ProtectedCommunicationZonesRSU.c	\
+	CenDsrcTollingZone.c	\
+	ProtectedZoneRadius.c	\
+	ProtectedZoneID.c	\
+	CenDsrcTollingZoneID.c	\
+	DigitalMap.c	\
+	OpeningDaysHours.c	\
+	PhoneNumber.c	\
+	ConnectionManeuverAssist-addGrpC.c	\
+	ConnectionTrajectory-addGrpC.c	\
+	IntersectionState-addGrpC.c	\
+	LaneAttributes-addGrpC.c	\
+	MapData-addGrpC.c	\
+	MovementEvent-addGrpC.c	\
+	NodeAttributeSet-addGrpC.c	\
+	Position3D-addGrpC.c	\
+	RestrictionUserType-addGrpC.c	\
+	RequestorDescription-addGrpC.c	\
+	SignalStatusPackage-addGrpC.c	\
+	ItsStationPosition.c	\
+	ItsStationPositionList.c	\
+	Node.c	\
+	NodeLink.c	\
+	PrioritizationResponse.c	\
+	PrioritizationResponseList.c	\
+	SignalHeadLocation.c	\
+	SignalHeadLocationList.c	\
+	BatteryStatus.c	\
+	EmissionType.c	\
+	ExceptionalCondition.c	\
+	PtvRequestType.c	\
+	RejectedReason.c	\
+	TimeReference.c	\
+	RegionalExtension.c	\
+	MapData.c	\
+	RTCMcorrections.c	\
+	SPAT.c	\
+	SignalRequestMessage.c	\
+	SignalStatusMessage.c	\
+	AdvisorySpeed.c	\
+	AdvisorySpeedList.c	\
+	AntennaOffsetSet.c	\
+	ComputedLane.c	\
+	ConnectsToList.c	\
+	ConnectingLane.c	\
+	Connection.c	\
+	ConnectionManeuverAssist.c	\
+	DataParameters.c	\
+	DDateTime.c	\
+	EnabledLaneList.c	\
+	FullPositionVector.c	\
+	GenericLane.c	\
+	IntersectionAccessPoint.c	\
+	IntersectionGeometry.c	\
+	IntersectionGeometryList.c	\
+	IntersectionReferenceID.c	\
+	IntersectionState.c	\
+	IntersectionStateList.c	\
+	LaneAttributes.c	\
+	LaneDataAttribute.c	\
+	LaneDataAttributeList.c	\
+	LaneList.c	\
+	LaneSharing.c	\
+	LaneTypeAttributes.c	\
+	ManeuverAssistList.c	\
+	MovementEvent.c	\
+	MovementEventList.c	\
+	MovementList.c	\
+	MovementState.c	\
+	NodeAttributeSetXY.c	\
+	NodeAttributeXY.c	\
+	NodeAttributeXYList.c	\
+	Node-LLmD-64b.c	\
+	Node-XY-20b.c	\
+	Node-XY-22b.c	\
+	Node-XY-24b.c	\
+	Node-XY-26b.c	\
+	Node-XY-28b.c	\
+	Node-XY-32b.c	\
+	NodeListXY.c	\
+	NodeOffsetPointXY.c	\
+	NodeXY.c	\
+	NodeSetXY.c	\
+	OverlayLaneList.c	\
+	PositionalAccuracy.c	\
+	PositionConfidenceSet.c	\
+	Position3D.c	\
+	PreemptPriorityList.c	\
+	RegulatorySpeedLimit.c	\
+	RequestorDescription.c	\
+	RequestorPositionVector.c	\
+	RequestorType.c	\
+	RestrictionClassAssignment.c	\
+	RestrictionClassList.c	\
+	RestrictionUserType.c	\
+	RestrictionUserTypeList.c	\
+	RoadLaneSetList.c	\
+	RoadSegmentReferenceID.c	\
+	RoadSegment.c	\
+	RoadSegmentList.c	\
+	RTCMheader.c	\
+	RTCMmessageList.c	\
+	SegmentAttributeXYList.c	\
+	SignalControlZone.c	\
+	SignalRequesterInfo.c	\
+	SignalRequest.c	\
+	SignalRequestList.c	\
+	SignalRequestPackage.c	\
+	SignalStatus.c	\
+	SignalStatusList.c	\
+	SignalStatusPackageList.c	\
+	SignalStatusPackage.c	\
+	SpeedandHeadingandThrottleConfidence.c	\
+	SpeedLimitList.c	\
+	SpeedLimitType.c	\
+	TimeChangeDetails.c	\
+	TimeMark.c	\
+	TransmissionAndSpeed.c	\
+	VehicleID.c	\
+	AdvisorySpeedType.c	\
+	AllowedManeuvers.c	\
+	Angle.c	\
+	ApproachID.c	\
+	BasicVehicleRole.c	\
+	DDay.c	\
+	DeltaAngle.c	\
+	DeltaTime.c	\
+	DescriptiveName.c	\
+	DHour.c	\
+	DMinute.c	\
+	DMonth.c	\
+	DOffset.c	\
+	DrivenLineOffsetLg.c	\
+	DrivenLineOffsetSm.c	\
+	DSecond.c	\
+	DSRCmsgID.c	\
+	DYear.c	\
+	Elevation.c	\
+	ElevationConfidence.c	\
+	FuelType.c	\
+	GNSSstatus.c	\
+	HeadingConfidenceIso.c	\
+	HeadingIso.c	\
+	IntersectionID.c	\
+	IntersectionStatusObject.c	\
+	LaneAttributes-Barrier.c	\
+	LaneAttributes-Bike.c	\
+	LaneAttributes-Crosswalk.c	\
+	LaneAttributes-Parking.c	\
+	LaneAttributes-Sidewalk.c	\
+	LaneAttributes-Striping.c	\
+	LaneAttributes-TrackedVehicle.c	\
+	LaneAttributes-Vehicle.c	\
+	LaneConnectionID.c	\
+	LaneDirection.c	\
+	LaneID.c	\
+	LayerID.c	\
+	LayerType.c	\
+	LaneWidth.c	\
+	MergeDivergeNodeAngle.c	\
+	MinuteOfTheYear.c	\
+	MovementPhaseState.c	\
+	MsgCount.c	\
+	Offset-B09.c	\
+	Offset-B10.c	\
+	Offset-B11.c	\
+	Offset-B12.c	\
+	Offset-B13.c	\
+	Offset-B14.c	\
+	Offset-B16.c	\
+	PedestrianBicycleDetect.c	\
+	PositionConfidence.c	\
+	PrioritizationResponseStatus.c	\
+	PriorityRequestType.c	\
+	RegionId.c	\
+	RequestID.c	\
+	RequestImportanceLevel.c	\
+	RequestSubRole.c	\
+	RestrictionAppliesTo.c	\
+	RestrictionClassID.c	\
+	RoadRegulatorID.c	\
+	RoadSegmentID.c	\
+	RoadwayCrownAngle.c	\
+	RTCMmessage.c	\
+	RTCM-Revision.c	\
+	Scale-B12.c	\
+	SignalGroupID.c	\
+	SegmentAttributeXY.c	\
+	SemiMajorAxisAccuracy.c	\
+	SemiMajorAxisOrientation.c	\
+	SemiMinorAxisAccuracy.c	\
+	SpeedAdvice.c	\
+	SpeedConfidenceIso.c	\
+	TemporaryID.c	\
+	ThrottleConfidence.c	\
+	TimeConfidence.c	\
+	TimeIntervalConfidence.c	\
+	TransitVehicleOccupancy.c	\
+	TransitVehicleStatus.c	\
+	TransmissionState.c	\
+	VehicleHeight.c	\
+	VehicleType.c	\
+	Velocity.c	\
+	WaitOnStopline.c	\
+	ZoneLength.c	\
+	EuVehicleCategoryCode.c	\
+	EuVehicleCategoryL.c	\
+	EuVehicleCategoryM.c	\
+	EuVehicleCategoryN.c	\
+	EuVehicleCategoryO.c	\
+	Iso3833VehicleType.c
+
+ASN_MODULE_HDRS=	\
+	SPATEM.h	\
+	ItsPduHeader.h	\
+	StationID.h	\
+	ReferencePosition.h	\
+	DeltaReferencePosition.h	\
+	Longitude.h	\
+	Latitude.h	\
+	Altitude.h	\
+	AltitudeValue.h	\
+	AltitudeConfidence.h	\
+	DeltaLongitude.h	\
+	DeltaLatitude.h	\
+	DeltaAltitude.h	\
+	PosConfidenceEllipse.h	\
+	PathPoint.h	\
+	PathDeltaTime.h	\
+	PtActivation.h	\
+	PtActivationType.h	\
+	PtActivationData.h	\
+	AccelerationControl.h	\
+	SemiAxisLength.h	\
+	CauseCode.h	\
+	CauseCodeType.h	\
+	SubCauseCodeType.h	\
+	TrafficConditionSubCauseCode.h	\
+	AccidentSubCauseCode.h	\
+	RoadworksSubCauseCode.h	\
+	HumanPresenceOnTheRoadSubCauseCode.h	\
+	WrongWayDrivingSubCauseCode.h	\
+	AdverseWeatherCondition-ExtremeWeatherConditionSubCauseCode.h	\
+	AdverseWeatherCondition-AdhesionSubCauseCode.h	\
+	AdverseWeatherCondition-VisibilitySubCauseCode.h	\
+	AdverseWeatherCondition-PrecipitationSubCauseCode.h	\
+	SlowVehicleSubCauseCode.h	\
+	StationaryVehicleSubCauseCode.h	\
+	HumanProblemSubCauseCode.h	\
+	EmergencyVehicleApproachingSubCauseCode.h	\
+	HazardousLocation-DangerousCurveSubCauseCode.h	\
+	HazardousLocation-SurfaceConditionSubCauseCode.h	\
+	HazardousLocation-ObstacleOnTheRoadSubCauseCode.h	\
+	HazardousLocation-AnimalOnTheRoadSubCauseCode.h	\
+	CollisionRiskSubCauseCode.h	\
+	SignalViolationSubCauseCode.h	\
+	RescueAndRecoveryWorkInProgressSubCauseCode.h	\
+	DangerousEndOfQueueSubCauseCode.h	\
+	DangerousSituationSubCauseCode.h	\
+	VehicleBreakdownSubCauseCode.h	\
+	PostCrashSubCauseCode.h	\
+	Curvature.h	\
+	CurvatureValue.h	\
+	CurvatureConfidence.h	\
+	CurvatureCalculationMode.h	\
+	Heading.h	\
+	HeadingValue.h	\
+	HeadingConfidence.h	\
+	LanePosition.h	\
+	ClosedLanes.h	\
+	HardShoulderStatus.h	\
+	DrivingLaneStatus.h	\
+	PerformanceClass.h	\
+	SpeedValue.h	\
+	SpeedConfidence.h	\
+	VehicleMass.h	\
+	Speed.h	\
+	DriveDirection.h	\
+	EmbarkationStatus.h	\
+	LongitudinalAcceleration.h	\
+	LongitudinalAccelerationValue.h	\
+	AccelerationConfidence.h	\
+	LateralAcceleration.h	\
+	LateralAccelerationValue.h	\
+	VerticalAcceleration.h	\
+	VerticalAccelerationValue.h	\
+	StationType.h	\
+	ExteriorLights.h	\
+	DangerousGoodsBasic.h	\
+	DangerousGoodsExtended.h	\
+	SpecialTransportType.h	\
+	LightBarSirenInUse.h	\
+	HeightLonCarr.h	\
+	PosLonCarr.h	\
+	PosPillar.h	\
+	PosCentMass.h	\
+	RequestResponseIndication.h	\
+	SpeedLimit.h	\
+	StationarySince.h	\
+	Temperature.h	\
+	TrafficRule.h	\
+	WheelBaseVehicle.h	\
+	TurningRadius.h	\
+	PosFrontAx.h	\
+	PositionOfOccupants.h	\
+	PositioningSolutionType.h	\
+	VehicleIdentification.h	\
+	WMInumber.h	\
+	VDS.h	\
+	EnergyStorageType.h	\
+	VehicleLength.h	\
+	VehicleLengthValue.h	\
+	VehicleLengthConfidenceIndication.h	\
+	VehicleWidth.h	\
+	PathHistory.h	\
+	EmergencyPriority.h	\
+	InformationQuality.h	\
+	RoadType.h	\
+	SteeringWheelAngle.h	\
+	SteeringWheelAngleValue.h	\
+	SteeringWheelAngleConfidence.h	\
+	TimestampIts.h	\
+	VehicleRole.h	\
+	YawRate.h	\
+	YawRateValue.h	\
+	YawRateConfidence.h	\
+	ProtectedZoneType.h	\
+	RelevanceDistance.h	\
+	RelevanceTrafficDirection.h	\
+	TransmissionInterval.h	\
+	ValidityDuration.h	\
+	ActionID.h	\
+	ItineraryPath.h	\
+	ProtectedCommunicationZone.h	\
+	Traces.h	\
+	NumberOfOccupants.h	\
+	SequenceNumber.h	\
+	PositionOfPillars.h	\
+	RestrictedTypes.h	\
+	EventHistory.h	\
+	EventPoint.h	\
+	ProtectedCommunicationZonesRSU.h	\
+	CenDsrcTollingZone.h	\
+	ProtectedZoneRadius.h	\
+	ProtectedZoneID.h	\
+	CenDsrcTollingZoneID.h	\
+	DigitalMap.h	\
+	OpeningDaysHours.h	\
+	PhoneNumber.h	\
+	ConnectionManeuverAssist-addGrpC.h	\
+	ConnectionTrajectory-addGrpC.h	\
+	IntersectionState-addGrpC.h	\
+	LaneAttributes-addGrpC.h	\
+	MapData-addGrpC.h	\
+	MovementEvent-addGrpC.h	\
+	NodeAttributeSet-addGrpC.h	\
+	Position3D-addGrpC.h	\
+	RestrictionUserType-addGrpC.h	\
+	RequestorDescription-addGrpC.h	\
+	SignalStatusPackage-addGrpC.h	\
+	ItsStationPosition.h	\
+	ItsStationPositionList.h	\
+	Node.h	\
+	NodeLink.h	\
+	PrioritizationResponse.h	\
+	PrioritizationResponseList.h	\
+	SignalHeadLocation.h	\
+	SignalHeadLocationList.h	\
+	BatteryStatus.h	\
+	EmissionType.h	\
+	ExceptionalCondition.h	\
+	PtvRequestType.h	\
+	RejectedReason.h	\
+	TimeReference.h	\
+	RegionalExtension.h	\
+	MapData.h	\
+	RTCMcorrections.h	\
+	SPAT.h	\
+	SignalRequestMessage.h	\
+	SignalStatusMessage.h	\
+	AdvisorySpeed.h	\
+	AdvisorySpeedList.h	\
+	AntennaOffsetSet.h	\
+	ComputedLane.h	\
+	ConnectsToList.h	\
+	ConnectingLane.h	\
+	Connection.h	\
+	ConnectionManeuverAssist.h	\
+	DataParameters.h	\
+	DDateTime.h	\
+	EnabledLaneList.h	\
+	FullPositionVector.h	\
+	GenericLane.h	\
+	IntersectionAccessPoint.h	\
+	IntersectionGeometry.h	\
+	IntersectionGeometryList.h	\
+	IntersectionReferenceID.h	\
+	IntersectionState.h	\
+	IntersectionStateList.h	\
+	LaneAttributes.h	\
+	LaneDataAttribute.h	\
+	LaneDataAttributeList.h	\
+	LaneList.h	\
+	LaneSharing.h	\
+	LaneTypeAttributes.h	\
+	ManeuverAssistList.h	\
+	MovementEvent.h	\
+	MovementEventList.h	\
+	MovementList.h	\
+	MovementState.h	\
+	NodeAttributeSetXY.h	\
+	NodeAttributeXY.h	\
+	NodeAttributeXYList.h	\
+	Node-LLmD-64b.h	\
+	Node-XY-20b.h	\
+	Node-XY-22b.h	\
+	Node-XY-24b.h	\
+	Node-XY-26b.h	\
+	Node-XY-28b.h	\
+	Node-XY-32b.h	\
+	NodeListXY.h	\
+	NodeOffsetPointXY.h	\
+	NodeXY.h	\
+	NodeSetXY.h	\
+	OverlayLaneList.h	\
+	PositionalAccuracy.h	\
+	PositionConfidenceSet.h	\
+	Position3D.h	\
+	PreemptPriorityList.h	\
+	RegulatorySpeedLimit.h	\
+	RequestorDescription.h	\
+	RequestorPositionVector.h	\
+	RequestorType.h	\
+	RestrictionClassAssignment.h	\
+	RestrictionClassList.h	\
+	RestrictionUserType.h	\
+	RestrictionUserTypeList.h	\
+	RoadLaneSetList.h	\
+	RoadSegmentReferenceID.h	\
+	RoadSegment.h	\
+	RoadSegmentList.h	\
+	RTCMheader.h	\
+	RTCMmessageList.h	\
+	SegmentAttributeXYList.h	\
+	SignalControlZone.h	\
+	SignalRequesterInfo.h	\
+	SignalRequest.h	\
+	SignalRequestList.h	\
+	SignalRequestPackage.h	\
+	SignalStatus.h	\
+	SignalStatusList.h	\
+	SignalStatusPackageList.h	\
+	SignalStatusPackage.h	\
+	SpeedandHeadingandThrottleConfidence.h	\
+	SpeedLimitList.h	\
+	SpeedLimitType.h	\
+	TimeChangeDetails.h	\
+	TimeMark.h	\
+	TransmissionAndSpeed.h	\
+	VehicleID.h	\
+	AdvisorySpeedType.h	\
+	AllowedManeuvers.h	\
+	Angle.h	\
+	ApproachID.h	\
+	BasicVehicleRole.h	\
+	DDay.h	\
+	DeltaAngle.h	\
+	DeltaTime.h	\
+	DescriptiveName.h	\
+	DHour.h	\
+	DMinute.h	\
+	DMonth.h	\
+	DOffset.h	\
+	DrivenLineOffsetLg.h	\
+	DrivenLineOffsetSm.h	\
+	DSecond.h	\
+	DSRCmsgID.h	\
+	DYear.h	\
+	Elevation.h	\
+	ElevationConfidence.h	\
+	FuelType.h	\
+	GNSSstatus.h	\
+	HeadingConfidenceIso.h	\
+	HeadingIso.h	\
+	IntersectionID.h	\
+	IntersectionStatusObject.h	\
+	LaneAttributes-Barrier.h	\
+	LaneAttributes-Bike.h	\
+	LaneAttributes-Crosswalk.h	\
+	LaneAttributes-Parking.h	\
+	LaneAttributes-Sidewalk.h	\
+	LaneAttributes-Striping.h	\
+	LaneAttributes-TrackedVehicle.h	\
+	LaneAttributes-Vehicle.h	\
+	LaneConnectionID.h	\
+	LaneDirection.h	\
+	LaneID.h	\
+	LayerID.h	\
+	LayerType.h	\
+	LaneWidth.h	\
+	MergeDivergeNodeAngle.h	\
+	MinuteOfTheYear.h	\
+	MovementPhaseState.h	\
+	MsgCount.h	\
+	Offset-B09.h	\
+	Offset-B10.h	\
+	Offset-B11.h	\
+	Offset-B12.h	\
+	Offset-B13.h	\
+	Offset-B14.h	\
+	Offset-B16.h	\
+	PedestrianBicycleDetect.h	\
+	PositionConfidence.h	\
+	PrioritizationResponseStatus.h	\
+	PriorityRequestType.h	\
+	RegionId.h	\
+	RequestID.h	\
+	RequestImportanceLevel.h	\
+	RequestSubRole.h	\
+	RestrictionAppliesTo.h	\
+	RestrictionClassID.h	\
+	RoadRegulatorID.h	\
+	RoadSegmentID.h	\
+	RoadwayCrownAngle.h	\
+	RTCMmessage.h	\
+	RTCM-Revision.h	\
+	Scale-B12.h	\
+	SignalGroupID.h	\
+	SegmentAttributeXY.h	\
+	SemiMajorAxisAccuracy.h	\
+	SemiMajorAxisOrientation.h	\
+	SemiMinorAxisAccuracy.h	\
+	SpeedAdvice.h	\
+	SpeedConfidenceIso.h	\
+	TemporaryID.h	\
+	ThrottleConfidence.h	\
+	TimeConfidence.h	\
+	TimeIntervalConfidence.h	\
+	TransitVehicleOccupancy.h	\
+	TransitVehicleStatus.h	\
+	TransmissionState.h	\
+	VehicleHeight.h	\
+	VehicleType.h	\
+	Velocity.h	\
+	WaitOnStopline.h	\
+	ZoneLength.h	\
+	EuVehicleCategoryCode.h	\
+	EuVehicleCategoryL.h	\
+	EuVehicleCategoryM.h	\
+	EuVehicleCategoryN.h	\
+	EuVehicleCategoryO.h	\
+	Iso3833VehicleType.h
+
+ASN_MODULE_HDRS+=ANY.h
+ASN_MODULE_SRCS+=ANY.c
+ASN_MODULE_HDRS+=OCTET_STRING.h
+ASN_MODULE_HDRS+=OPEN_TYPE.h
+ASN_MODULE_SRCS+=OPEN_TYPE.c
+ASN_MODULE_HDRS+=constr_CHOICE.h
+ASN_MODULE_HDRS+=BOOLEAN.h
+ASN_MODULE_SRCS+=BOOLEAN.c
+ASN_MODULE_HDRS+=IA5String.h
+ASN_MODULE_SRCS+=IA5String.c
+ASN_MODULE_HDRS+=INTEGER.h
+ASN_MODULE_SRCS+=INTEGER.c
+ASN_MODULE_HDRS+=NULL.h
+ASN_MODULE_SRCS+=NULL.c
+ASN_MODULE_HDRS+=NativeEnumerated.h
+ASN_MODULE_SRCS+=NativeEnumerated.c
+ASN_MODULE_HDRS+=NativeInteger.h
+ASN_MODULE_SRCS+=NativeInteger.c
+ASN_MODULE_HDRS+=NumericString.h
+ASN_MODULE_SRCS+=NumericString.c
+ASN_MODULE_HDRS+=UTF8String.h
+ASN_MODULE_SRCS+=UTF8String.c
+ASN_MODULE_HDRS+=asn_SEQUENCE_OF.h
+ASN_MODULE_SRCS+=asn_SEQUENCE_OF.c
+ASN_MODULE_HDRS+=asn_SET_OF.h
+ASN_MODULE_SRCS+=asn_SET_OF.c
+ASN_MODULE_SRCS+=constr_CHOICE.c
+ASN_MODULE_HDRS+=constr_SEQUENCE.h
+ASN_MODULE_SRCS+=constr_SEQUENCE.c
+ASN_MODULE_HDRS+=constr_SEQUENCE_OF.h
+ASN_MODULE_SRCS+=constr_SEQUENCE_OF.c
+ASN_MODULE_HDRS+=constr_SET_OF.h
+ASN_MODULE_SRCS+=constr_SET_OF.c
+ASN_MODULE_HDRS+=asn_application.h
+ASN_MODULE_SRCS+=asn_application.c
+ASN_MODULE_HDRS+=asn_ioc.h
+ASN_MODULE_HDRS+=asn_system.h
+ASN_MODULE_HDRS+=asn_codecs.h
+ASN_MODULE_HDRS+=asn_internal.h
+ASN_MODULE_SRCS+=asn_internal.c
+ASN_MODULE_HDRS+=asn_random_fill.h
+ASN_MODULE_SRCS+=asn_random_fill.c
+ASN_MODULE_HDRS+=asn_bit_data.h
+ASN_MODULE_SRCS+=asn_bit_data.c
+ASN_MODULE_SRCS+=OCTET_STRING.c
+ASN_MODULE_HDRS+=BIT_STRING.h
+ASN_MODULE_SRCS+=BIT_STRING.c
+ASN_MODULE_SRCS+=asn_codecs_prim.c
+ASN_MODULE_HDRS+=asn_codecs_prim.h
+ASN_MODULE_HDRS+=ber_tlv_length.h
+ASN_MODULE_SRCS+=ber_tlv_length.c
+ASN_MODULE_HDRS+=ber_tlv_tag.h
+ASN_MODULE_SRCS+=ber_tlv_tag.c
+ASN_MODULE_HDRS+=ber_decoder.h
+ASN_MODULE_SRCS+=ber_decoder.c
+ASN_MODULE_HDRS+=der_encoder.h
+ASN_MODULE_SRCS+=der_encoder.c
+ASN_MODULE_HDRS+=constr_TYPE.h
+ASN_MODULE_SRCS+=constr_TYPE.c
+ASN_MODULE_HDRS+=constraints.h
+ASN_MODULE_SRCS+=constraints.c
+ASN_MODULE_HDRS+=xer_support.h
+ASN_MODULE_SRCS+=xer_support.c
+ASN_MODULE_HDRS+=xer_decoder.h
+ASN_MODULE_SRCS+=xer_decoder.c
+ASN_MODULE_HDRS+=xer_encoder.h
+ASN_MODULE_SRCS+=xer_encoder.c
+ASN_MODULE_HDRS+=per_support.h
+ASN_MODULE_SRCS+=per_support.c
+ASN_MODULE_HDRS+=per_decoder.h
+ASN_MODULE_SRCS+=per_decoder.c
+ASN_MODULE_HDRS+=per_encoder.h
+ASN_MODULE_SRCS+=per_encoder.c
+ASN_MODULE_HDRS+=per_opentype.h
+ASN_MODULE_SRCS+=per_opentype.c
+ASN_MODULE_HDRS+=oer_decoder.h
+ASN_MODULE_HDRS+=oer_encoder.h
+ASN_MODULE_HDRS+=oer_support.h
+ASN_MODULE_SRCS+=oer_decoder.c
+ASN_MODULE_SRCS+=oer_encoder.c
+ASN_MODULE_SRCS+=oer_support.c
+ASN_MODULE_SRCS+=OPEN_TYPE_oer.c
+ASN_MODULE_SRCS+=INTEGER_oer.c
+ASN_MODULE_SRCS+=BIT_STRING_oer.c
+ASN_MODULE_SRCS+=OCTET_STRING_oer.c
+ASN_MODULE_SRCS+=NativeInteger_oer.c
+ASN_MODULE_SRCS+=NativeEnumerated_oer.c
+ASN_MODULE_SRCS+=constr_CHOICE_oer.c
+ASN_MODULE_SRCS+=constr_SEQUENCE_oer.c
+ASN_MODULE_SRCS+=constr_SET_OF_oer.c
+
+ASN_MODULE_CFLAGS=
+
+lib_LTLIBRARIES+=libasncodec.la
+libasncodec_la_SOURCES=$(ASN_MODULE_SRCS) $(ASN_MODULE_HDRS)
+libasncodec_la_CPPFLAGS=-I$(top_srcdir)/
+libasncodec_la_CFLAGS=$(ASN_MODULE_CFLAGS)
+libasncodec_la_LDFLAGS=-lm

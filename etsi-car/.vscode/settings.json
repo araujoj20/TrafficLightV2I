@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "spatem.h": "c",
+        "per_decoder.h": "c"
+    }
+}
