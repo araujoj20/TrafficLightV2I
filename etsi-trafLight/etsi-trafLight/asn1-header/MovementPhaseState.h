@@ -29,7 +29,7 @@ typedef enum MovementPhaseState {
 	MovementPhaseState_protected_Movement_Allowed	= 6,
 	MovementPhaseState_permissive_clearance	= 7,
 	MovementPhaseState_protected_clearance	= 8,
-	MovementPhaseState_caution_Conflicting_Traffic	= 9
+	MovementPhaseState_caution_Conflicting_Traffic	= 9	
 } e_MovementPhaseState;
 
 /* MovementPhaseState */

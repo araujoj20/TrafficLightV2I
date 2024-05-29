@@ -4,108 +4,104 @@
 #include "asn1-header/per_encoder.h"
 #include "asn1-header/per_decoder.h"
 
+#include "unistd.h"
+
+/* Prototypes */
+
+void genHeader(SPATEM_t* spatMessage);
+void genIntersection(IntersectionState_t* intersection, int int_index);
+void genIntersectionStatus(IntersectionState_t* intersection, int intStatus);
+void getStateAndTime(MovementEvent_t* event);
+MinuteOfTheYear_t getCurrTime(void);
+
+int createSocket();
+void configureServerAddress(struct sockaddr_in *server_addr);
+void sendMessage(int sockfd, struct sockaddr_in *server_addr, char *buffer, unsigned int bytes_enc);
+
+/* Defines*/
+
+#define STATION_ID 0x12345678          
+#define NUM_OF_INTERSECTIONS 4         
+
+#define INTERSECTION_ID1        0x1111
+#define INTERSECTION_ID2        0x2222
+#define INTERSECTION_ID3        0x3333
+#define INTERSECTION_ID4        0x4444
+
+#define STATUS_1 IntersectionStatusObject_failureFlash                  // 2
+#define STATUS_2 IntersectionStatusObject_signalPriorityIsActive        // 4
+#define STATUS_3 IntersectionStatusObject_trafficDependentOperation     // 6
+#define STATUS_4 IntersectionStatusObject_failureMode                   // 8
+
 #define SERVER_IP "192.168.1.5"
 #define PORT 12345
-#define MAX_MSG_SIZE 1024
-
-#define STATION_UNIQUE_ID 0x12345454
+#define MAX_MSG_SIZE 1024       
 
 
-SPATEM_t spatem_example;
-IntersectionReferenceID_t intersection_id = {0};
+/* Global Variables*/
 
-IntersectionState_t intersection_state_example = {0};
-IntersectionState_t* array_of_intersection_state_pointers[5];
+SPATEM_t spatMessage;
+IntersectionID_t intersectionIDs[NUM_OF_INTERSECTIONS] = {INTERSECTION_ID1, INTERSECTION_ID2, INTERSECTION_ID3, INTERSECTION_ID4};
+e_IntersectionStatusObject intersectionSTATUS [NUM_OF_INTERSECTIONS] = {STATUS_1, STATUS_2, STATUS_3, STATUS_4};
 
-IntersectionStatusObject_t intersection_status_example = {0};
-uint8_t inter_status_buf = IntersectionStatusObject_off;
+/* Functions */
 
-MovementState_t movement_state_example = {0};
-MovementState_t* array_of_movement_state_pointers[5];
-
-MovementEvent_t movement_event_example = {0};
-MovementEvent_t* array_of_movement_event_pointers[5];
-
-DescriptiveName_t intersection_state_example_name = {0};
-
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
-    asn_enc_rval_t ec; /*Encoder return value*/
-    asn_dec_rval_t dc; /*Decoder return value*/
-    uint16_t index = 0;
-    int ret;
-    MinuteOfTheYear_t spat_timestamp = 0x0000000000008734;
-    SPATEM_t* decoded_spatem = &spatem_example;
-    uint8_t out_buffer[1024] = {0};
-    unsigned int bytes_enc = 0;
-    int sockfd;
-    struct sockaddr_in server_addr;
+    asn_enc_rval_t ec; // Encoder return value
+    asn_dec_rval_t dc; // Decoder return value
 
-    sockfd = createSocket();
+    struct sockaddr_in server_addr;
+    int sockfd = createSocket();
     configureServerAddress(&server_addr);
 
-    printf("Starting SPATEM encoding\n");
+    /* HEADER */
+    genHeader(&spatMessage);
 
-    printf("Initializing SPATEM structure...\n");
-    /*SPATEM ITS PDU Header*/
-    spatem_example.header.messageID = 3;
-    spatem_example.header.protocolVersion = 4;
-    spatem_example.header.stationID = STATION_UNIQUE_ID;
-    //spatem_example.header._asn_ctx. -> check _asn_ctx purpose
+    /* Intersection State - the only mandatory data frame of the SPAT payload */
+    /* Each */
+    IntersectionState_t* intersectionArray[NUM_OF_INTERSECTIONS];
 
-    /*SPATEM SPAT payload*/
-        /*SPAT Timestamp - OPT*/
-        spatem_example.spat.timeStamp = &spat_timestamp;
-        /*SPAT Name - OPT*/
-        /*SPAT Intersections payload*/
-            /*Intersections Name payload - OPT*/
-            intersection_state_example_name.buf = "Inter1a2b3c"; //0x49 0x6e 0x74 0x65 0x72 0x31
-            intersection_state_example_name.size = (strlen(intersection_state_example_name.buf));
-        intersection_state_example.name = &intersection_state_example_name;
+    for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) 
+    {
+        intersectionArray[i] = (IntersectionState_t*)malloc(sizeof(IntersectionState_t));
+        if (intersectionArray[i] == NULL)
+        {
+            printf("Memory allocation failed.\n");
+            return -1;
+        }
+    }
 
-            /*Intersections ID payload*/
-            intersection_id.id = 2;
-        intersection_state_example.id = intersection_id;
+    spatMessage.spat.intersections.list.array = intersectionArray;
+    spatMessage.spat.intersections.list.count = NUM_OF_INTERSECTIONS;
 
-            /*Intersections Revision payload*/
-        intersection_state_example.revision = 1;
+    for(int i = 1; i <= NUM_OF_INTERSECTIONS; i++)
+    {
+        genIntersection(intersectionArray[i], i);
+    }
 
-            /*Intersections Status payload*/
-            intersection_status_example.bits_unused = 4;
-            intersection_status_example.buf = &inter_status_buf;
-            intersection_status_example.size = 1;
-        intersection_state_example.status = intersection_status_example;
-            /*Intersections Moy (minutesofyear) payload - OPT*/
-            /*Intersections Timestamp payload - OPT*/
-            /*Intersections EnabledLanes - OPT*/
-            /*Intersections States payload*/
-            movement_state_example.signalGroup = 1;
-                /*States MovementEvent payload*/
-                movement_event_example.eventState = MovementPhaseState_unavailable;
-                movement_event_example.regional = NULL;
-            movement_state_example.state_time_speed.list.array = array_of_movement_event_pointers;
-            movement_state_example.state_time_speed.list.array[0] = &movement_event_example;
-            movement_state_example.state_time_speed.list.count = 1;
-            movement_state_example.state_time_speed.list.size = 1;
-                /*States regional payload*/
-            movement_state_example.regional = NULL;
-        intersection_state_example.states.list.array = array_of_movement_state_pointers;
-        intersection_state_example.states.list.array[0] = &movement_state_example;
-        intersection_state_example.states.list.count = 1;
-        intersection_state_example.states.list.size = 1;
-            /*Intersections ManeuverAssistList payload - OPT*/
-            /*Intersections Regional payload*/
-        intersection_state_example.regional = NULL;
+    /* Get the current time */
+    MinuteOfTheYear_t currTimeSpat = getCurrTime();
 
-    spatem_example.spat.intersections.list.array = array_of_intersection_state_pointers;
-    spatem_example.spat.intersections.list.array[0] = &intersection_state_example;
-    spatem_example.spat.intersections.list.count = 1;
-    spatem_example.spat.intersections.list.size = 1;
-    spatem_example.spat.regional = NULL;
+    /* Time Stamp - Current time in MinuteOfTheYear_t format */
+    spatMessage.spat.timeStamp = &currTimeSpat;
+
+
+
+
+    uint16_t index = 0;
+    int ret;
+    uint8_t out_buffer[1024] = {0};
+    unsigned int bytes_enc = 0;
+    
+ 
+
+
+
 
 
     printf("Checking for constraints Intersection State List...\n");
-    ret = asn_check_constraints(&asn_DEF_IntersectionStateList, &spatem_example.spat.intersections.list, out_buffer, (size_t*)&index);
+    ret = asn_check_constraints(&asn_DEF_IntersectionStateList, &spatMessage.spat.intersections.list, out_buffer, (size_t*)&index);
 
     if(ret)
     {
@@ -114,7 +110,7 @@ int main(int ac, char **av)
     }
 
     printf("Checking for constraints SPATEM...\n");
-    ret = asn_check_constraints(&asn_DEF_SPATEM, &spatem_example, out_buffer, (size_t*)&index);
+    ret = asn_check_constraints(&asn_DEF_SPATEM, &spatMessage, out_buffer, (size_t*)&index);
 
     if(ret)
     {
@@ -125,20 +121,20 @@ int main(int ac, char **av)
     memset(out_buffer, 0, sizeof(out_buffer));
 
     printf("ITS PDU Header: protocol Version: %ld, messageID: %ld, stationID: %ld\n",
-            spatem_example.header.protocolVersion, spatem_example.header.messageID,
-            spatem_example.header.stationID);
+            spatMessage.header.protocolVersion, spatMessage.header.messageID,
+            spatMessage.header.stationID);
 
-    if(spatem_example.spat.intersections.list.array)
+    if(spatMessage.spat.intersections.list.array)
     {
         printf("SPAT payload: timeStamp: %ld, intersection ID: %ld, intersection Name: %*s\n",
-            *(spatem_example.spat.timeStamp), spatem_example.spat.intersections.list.array[0]->id.id,
-            (int)spatem_example.spat.intersections.list.array[0]->name->size, 
-            spatem_example.spat.intersections.list.array[0]->name->buf);
+            *(spatMessage.spat.timeStamp), spatMessage.spat.intersections.list.array[0]->id.id,
+            (int)spatMessage.spat.intersections.list.array[0]->name->size, 
+            spatMessage.spat.intersections.list.array[0]->name->buf);
     }
 
     printf("\nPreparing to encode the message...\n");
 
-    ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, &spatem_example, out_buffer, 1024);
+    ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, &spatMessage, out_buffer, 1024);
 
     bytes_enc = (ec.encoded + 7) / 8;
 
@@ -163,6 +159,7 @@ int main(int ac, char **av)
         
         sendMessage(sockfd, &server_addr, out_buffer, bytes_enc);
 
+
         sleep(1);
     }
 
@@ -171,7 +168,109 @@ int main(int ac, char **av)
     return 0;
 }
 
+/* -------------------------------------- DF and DE --------------------------------------*/
 
+/* Generate the SPATEM Header */
+void genHeader(SPATEM_t* spatMessage)
+{
+    /* Protocol Version - version of the ITS payload contained in the message */
+    spatMessage->header.protocolVersion = 1;
+
+    /* Message ID - type of the ITS payload contained in the message */
+    spatMessage->header.messageID = ItsPduHeader__messageID_spatem;
+
+    /* Station ID - identifier of the ITS station that sent the message */
+    spatMessage->header.stationID = STATION_ID;
+
+    return;
+}
+
+/* Generate one Intersection payload */
+void genIntersection(IntersectionState_t* intersection, int index)
+{
+    /* The use of Regional Extensions is not yet supported by this program*/
+    intersection->regional = NULL;
+
+    /* Intersection Reference ID - identifier of the intersection. Unique value in the region or country (255 - 65535) */
+    intersection->id.id = intersectionIDs[index-1];
+
+    /* MsgCount - a number that is incremented after each message with the same type (SPAT in this case) and sent by the same sender (0 - 127) */
+    intersection->revision = (intersection->revision == 127) ? 0 : (intersection->revision + 1);
+
+    /* Intersection Status Object - contains extra status information about the controller or intersection */
+    int intStatus = intersectionSTATUS[index-1]; 
+    genIntersectionStatus(intersection, intStatus);
+    
+    /* Since this is a simple traffic signal station, the program will allow only one movement state and event */
+    MovementState_t state;
+    MovementState_t* stateArray[1];
+    MovementEvent_t event;
+    MovementEvent_t* eventArray[1];    
+
+    /* Connection of the state to the list of states */
+    intersection->states.list.array = stateArray;
+    intersection->states.list.array[0] = &state;
+    intersection->states.list.count = 1;
+    intersection->states.list.size = 1;    
+
+    /* Connection of the event to the list of events */
+    state.state_time_speed.list.array = eventArray;
+    state.state_time_speed.list.array[0] = &event;
+    state.state_time_speed.list.count = 1;
+    state.state_time_speed.list.size = 1;
+
+    /* Signal Group ID - identifier that represent the current movement, phase and topology (0 - 255) */
+    /* It's related to the MAP message, so its value = 0, which means the ID is not available or not known */
+    state.signalGroup = 0;
+
+    /* Get the current phase signal and the respective timings */
+    getStateAndTime(&event);
+}
+
+/* Generate the appropriate BIT STRING to the specified intersection status */
+void genIntersectionStatus(IntersectionState_t* intersection, int intStatus)
+{
+    /* Calculates the byte index of the buffer where the bit should be written */
+    int bufferIndex = intStatus / 8;
+    /* Calculates the bit position in the byte specified by bufferIndex */
+    int bufferOffset = intStatus % 8;
+
+    /* Enables the correspondent bit in the buffer */
+    intersection->status.buf[bufferIndex] = (1 << bufferOffset);
+    /* Size - size of the buffer (bytes) */
+    intersection->status.size = bufferIndex + 1;
+    /* Bits Unused - number of bits not used (0) in the last byte/octet */
+    intersection->status.bits_unused = 7 - bufferOffset;   
+}
+
+
+
+/* Get the timing values for the signal */
+void getStateAndTime(MovementEvent_t* event)
+{
+    // TODO implementar metodo para ler estado do semaforo na maquina de estados e os respetivos timings
+
+    /* Movement Phase and State - represents the current state of the traffic signal */
+    event->eventState = MovementPhaseState_protected_clearance;    
+
+    /* Start Time - time when the future phase signal will start */
+    event->timing->startTime = 500;
+
+    /* Min End Time - shortest end time for the current phase signal */
+    event->timing->minEndTime = 30;
+
+    /* Max End Time - longest end time for the current phase signal */
+    event->timing->maxEndTime = 70;
+}
+
+/* Get the current time value in MinuteOfTheYear_t format */
+MinuteOfTheYear_t getCurrTime(void)
+{
+    // TODO implementar metodo para tempo atual
+    return 20000;
+}
+
+/* -------------------------------------- COMMS --------------------------------------*/
 
 int createSocket() {
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -198,3 +297,5 @@ void sendMessage(int sockfd, struct sockaddr_in *server_addr, char *buffer, unsi
         exit(EXIT_FAILURE);
     }
 }
+
+
