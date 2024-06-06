@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "spatem.h": "c",
+        "in.h": "c",
+        "inet.h": "c",
+        "per_decoder.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c"
+    }
+}
