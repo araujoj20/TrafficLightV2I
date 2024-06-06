@@ -3,14 +3,14 @@
 
 ## Usefull Commands
 
-*ssh pi@raspberrypi.local*
+`ssh pi@raspberrypi.local`
 
-*pi@raspberrypi  -- Traffic Light*
+`pi@raspberrypi  -- Traffic Light`
 
-*pi@raspberrypiC -- Car*
+`pi@raspberrypiC -- Car`
 
-*hostname -I*
+`hostname -I`
 
-*sudo nmcli dev wifi list*
+`sudo nmcli dev wifi list`
 
-*sudo nmcli dev wifi connect <wifi_network_name> password <wifi_password>*
+`sudo nmcli dev wifi connect <wifi_network_name> password <wifi_password>`
