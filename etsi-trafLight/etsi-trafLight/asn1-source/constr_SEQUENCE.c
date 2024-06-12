@@ -1623,4 +1623,3 @@ SEQUENCE_random_fill(const asn_TYPE_descriptor_t *td, void **sptr,
 
     return result_ok;
 }
-

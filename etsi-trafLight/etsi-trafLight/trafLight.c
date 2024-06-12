@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "asn1-header/SPATEM.h"
 #include "asn1-header/per_encoder.h"
 #include "asn1-header/per_decoder.h"
-
-#include "unistd.h"
 
 /* Prototypes */
 
@@ -14,13 +16,17 @@ void genIntersectionStatus(IntersectionState_t* intersection, int intStatus);
 void getStateAndTime(MovementEvent_t* event);
 MinuteOfTheYear_t getCurrTime(void);
 
+void printIntersectionInfo(const IntersectionState_t* intersection);
+void freeMemory(void);
+
 int createSocket();
 void configureServerAddress(struct sockaddr_in *server_addr);
 void sendMessage(int sockfd, struct sockaddr_in *server_addr, char *buffer, unsigned int bytes_enc);
 
-/* Defines*/
+/* Defines */
 
-#define STATION_ID 0x12345678          
+#define STATION_ID 0x12345678      
+#define MAX_OF_INTERSECTIONS 4    
 #define NUM_OF_INTERSECTIONS 4         
 
 #define INTERSECTION_ID1        0x1111
@@ -35,14 +41,14 @@ void sendMessage(int sockfd, struct sockaddr_in *server_addr, char *buffer, unsi
 
 #define SERVER_IP "192.168.1.5"
 #define PORT 12345
-#define MAX_MSG_SIZE 1024       
+#define MAX_MSG_SIZE 10000       
 
-
-/* Global Variables*/
+/* Global Variables */
 
 SPATEM_t spatMessage;
-IntersectionID_t intersectionIDs[NUM_OF_INTERSECTIONS] = {INTERSECTION_ID1, INTERSECTION_ID2, INTERSECTION_ID3, INTERSECTION_ID4};
-e_IntersectionStatusObject intersectionSTATUS [NUM_OF_INTERSECTIONS] = {STATUS_1, STATUS_2, STATUS_3, STATUS_4};
+IntersectionID_t intersectionIDs[MAX_OF_INTERSECTIONS] = {INTERSECTION_ID1, INTERSECTION_ID2, INTERSECTION_ID3, INTERSECTION_ID4};
+e_IntersectionStatusObject intersectionSTATUS[MAX_OF_INTERSECTIONS] = {STATUS_1, STATUS_2, STATUS_3, STATUS_4};
+const char* intersectionNames[MAX_OF_INTERSECTIONS] = {"First INT", "Second INT", "Third INT", "Fourth INT"};
 
 /* Functions */
 
@@ -51,6 +57,11 @@ int main(int argc, char **argv)
     asn_enc_rval_t ec; // Encoder return value
     asn_dec_rval_t dc; // Decoder return value
 
+    uint16_t index = 0;
+    int ret;
+    uint8_t out_buffer[MAX_MSG_SIZE] = {0};
+    unsigned int bytes_enc = 0;
+
     struct sockaddr_in server_addr;
     int sockfd = createSocket();
     configureServerAddress(&server_addr);
@@ -58,26 +69,32 @@ int main(int argc, char **argv)
     /* HEADER */
     genHeader(&spatMessage);
 
-    /* Intersection State - the only mandatory data frame of the SPAT payload */
-    /* Each */
-    IntersectionState_t* intersectionArray[NUM_OF_INTERSECTIONS];
-
-    for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) 
-    {
-        intersectionArray[i] = (IntersectionState_t*)malloc(sizeof(IntersectionState_t));
-        if (intersectionArray[i] == NULL)
-        {
-            printf("Memory allocation failed.\n");
-            return -1;
-        }
+    /* Allocate memory for the intersection array */
+    IntersectionState_t* intersectionArray = (IntersectionState_t*) malloc(NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t));
+    if (intersectionArray == NULL) {
+        printf("Memory allocation failed - IntersectionState_t*\n");
+        return -1;
     }
 
-    spatMessage.spat.intersections.list.array = intersectionArray;
-    spatMessage.spat.intersections.list.count = NUM_OF_INTERSECTIONS;
+    /* Allocate memory for the array of the intersections list */
+    spatMessage.spat.intersections.list.array = (IntersectionState_t**) malloc(NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t*));
+    if (spatMessage.spat.intersections.list.array == NULL) {
+        printf("Memory allocation failed - spatMessage.spat.intersections.list.array\n");
+        free(intersectionArray);
+        return -1;
+    }
 
-    for(int i = 1; i <= NUM_OF_INTERSECTIONS; i++)
-    {
-        genIntersection(intersectionArray[i], i);
+    /* Initialize the array pointers */
+    for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) {
+        spatMessage.spat.intersections.list.array[i] = &intersectionArray[i];
+    }
+
+    spatMessage.spat.intersections.list.count = NUM_OF_INTERSECTIONS;
+    spatMessage.spat.intersections.list.size = NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t*);
+
+    /* Generate each intersection */
+    for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) {
+        genIntersection(&intersectionArray[i], i);
     }
 
     /* Get the current time */
@@ -87,54 +104,53 @@ int main(int argc, char **argv)
     spatMessage.spat.timeStamp = &currTimeSpat;
 
 
-
-
-    uint16_t index = 0;
-    int ret;
-    uint8_t out_buffer[1024] = {0};
-    unsigned int bytes_enc = 0;
-    
- 
-
-
-
-
-
-    printf("Checking for constraints Intersection State List...\n");
     ret = asn_check_constraints(&asn_DEF_IntersectionStateList, &spatMessage.spat.intersections.list, out_buffer, (size_t*)&index);
-
     if(ret)
     {
-        printf("Error checking constraints: %s\n", out_buffer);
+        printf("Error checking constraints - Intersection State List: %s\n", out_buffer);
+        free(intersectionArray);
+        free(spatMessage.spat.intersections.list.array);
         return -1;
     }
 
-    printf("Checking for constraints SPATEM...\n");
     ret = asn_check_constraints(&asn_DEF_SPATEM, &spatMessage, out_buffer, (size_t*)&index);
-
     if(ret)
     {
-        printf("Error checking constraints: %s\n", out_buffer);
+        printf("Error checking constraints - SPATEM: %s\n", out_buffer);
+        free(intersectionArray);
+        free(spatMessage.spat.intersections.list.array);
         return -1;
     }
 
     memset(out_buffer, 0, sizeof(out_buffer));
 
+
     printf("ITS PDU Header: protocol Version: %ld, messageID: %ld, stationID: %ld\n",
             spatMessage.header.protocolVersion, spatMessage.header.messageID,
             spatMessage.header.stationID);
 
+    // if(spatMessage.spat.intersections.list.array)
+    // {
+    //     for(int i=0; i<NUM_OF_INTERSECTIONS; i++)
+    //     {
+    //     printf("SPAT payload: timeStamp: %ld, intersection ID: 0x%lx, intersection Name: %*s\n",
+    //         *(spatMessage.spat.timeStamp), spatMessage.spat.intersections.list.array[i]->id.id,
+    //         (int)spatMessage.spat.intersections.list.array[i]->name->size, 
+    //         spatMessage.spat.intersections.list.array[i]->name->buf);
+    //     }
+    // }
+
     if(spatMessage.spat.intersections.list.array)
     {
-        printf("SPAT payload: timeStamp: %ld, intersection ID: %ld, intersection Name: %*s\n",
-            *(spatMessage.spat.timeStamp), spatMessage.spat.intersections.list.array[0]->id.id,
-            (int)spatMessage.spat.intersections.list.array[0]->name->size, 
-            spatMessage.spat.intersections.list.array[0]->name->buf);
+        for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) 
+        {
+            printIntersectionInfo(spatMessage.spat.intersections.list.array[i]);
+        }
     }
 
     printf("\nPreparing to encode the message...\n");
 
-    ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, &spatMessage, out_buffer, 1024);
+    ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, &spatMessage, out_buffer, sizeof(out_buffer));
 
     bytes_enc = (ec.encoded + 7) / 8;
 
@@ -154,16 +170,54 @@ int main(int argc, char **argv)
         printf("Error while encoding: %s\n", ec.failed_type ? ec.failed_type->name : "unknown");
     }
 
+    SPATEM_t* decoded_spatem = &spatMessage;
+
+    memset(&spatMessage, 0, sizeof(spatMessage));
+
+    printf("\nPreparing to decode the message...\n");
+
+    dc = uper_decode_complete(NULL, &asn_DEF_SPATEM, (void **)&decoded_spatem, out_buffer, index);
+
+    if (dc.code != RC_OK)
+    {
+        printf("Error decoding buffer at bit %ld \n", dc.consumed);
+        free(intersectionArray);
+        free(spatMessage.spat.intersections.list.array);
+        return -1;
+    }
+
+    printf("Message decoded with success\n");
+
+    printf("ITS PDU Header: protocol Version: %ld, messageID: %ld, stationID: %lx\n",
+            decoded_spatem->header.protocolVersion, decoded_spatem->header.messageID,
+            decoded_spatem->header.stationID);
+
+    if(decoded_spatem->spat.intersections.list.array)
+    {
+        for(int i=0; i<NUM_OF_INTERSECTIONS; i++)
+        {
+        // printf("SPAT payload: timeStamp: %ld, intersection ID: 0x%lx, intersection Name: %*s\n",
+        //     *(decoded_spatem->spat.timeStamp), decoded_spatem->spat.intersections.list.array[i]->id.id,
+        //     (int)decoded_spatem->spat.intersections.list.array[i]->name->size, 
+        //     decoded_spatem->spat.intersections.list.array[i]->name->buf);
+
+            printIntersectionInfo(decoded_spatem->spat.intersections.list.array[i]);
+        }
+    }
+
     int count = 0;
     while(count++ < 30) {
         
         sendMessage(sockfd, &server_addr, out_buffer, bytes_enc);
 
-
         sleep(1);
     }
 
     close(sockfd);
+
+    /* Free allocated memory */
+    freeMemory();
+    free(intersectionArray);
 
     return 0;
 }
@@ -179,123 +233,250 @@ void genHeader(SPATEM_t* spatMessage)
     /* Message ID - type of the ITS payload contained in the message */
     spatMessage->header.messageID = ItsPduHeader__messageID_spatem;
 
-    /* Station ID - identifier of the ITS station that sent the message */
+    /* Station ID - unique identifier of the ITS-S originating the message */
     spatMessage->header.stationID = STATION_ID;
-
-    return;
 }
 
-/* Generate one Intersection payload */
-void genIntersection(IntersectionState_t* intersection, int index)
+/* Generate an intersection */
+void genIntersection(IntersectionState_t* intersection, int int_index)
 {
-    /* The use of Regional Extensions is not yet supported by this program*/
-    intersection->regional = NULL;
+    int i = int_index;
+    if (i < 0 || i >= NUM_OF_INTERSECTIONS) {
+        return;
+    }
 
-    /* Intersection Reference ID - identifier of the intersection. Unique value in the region or country (255 - 65535) */
-    intersection->id.id = intersectionIDs[index-1];
+    /* Intersection ID */
+    intersection->id.id = intersectionIDs[i];
 
-    /* MsgCount - a number that is incremented after each message with the same type (SPAT in this case) and sent by the same sender (0 - 127) */
-    intersection->revision = (intersection->revision == 127) ? 0 : (intersection->revision + 1);
+    /* Intersection name */
+    intersection->name = (DescriptiveName_t*) malloc(sizeof(DescriptiveName_t));
+    if (intersection->name == NULL) {
+        printf("Memory allocation failed - Intersection Name\n");
+        exit(-1);
+    }
+    size_t name_len = strlen(intersectionNames[i]);
+    intersection->name->buf = (uint8_t*) malloc(name_len);
+    if (intersection->name->buf == NULL) {
+        printf("Memory allocation failed - Intersection Name Buffer\n");
+        exit(-1);
+    }
+    memcpy(intersection->name->buf, intersectionNames[i], name_len);
+    intersection->name->size = name_len;
 
-    /* Intersection Status Object - contains extra status information about the controller or intersection */
-    int intStatus = intersectionSTATUS[index-1]; 
-    genIntersectionStatus(intersection, intStatus);
-    
-    /* Since this is a simple traffic signal station, the program will allow only one movement state and event */
-    MovementState_t state;
-    MovementState_t* stateArray[1];
-    MovementEvent_t event;
-    MovementEvent_t* eventArray[1];    
+    /* Generate the status */
+    genIntersectionStatus(intersection, intersectionSTATUS[i]);
 
-    /* Connection of the state to the list of states */
-    intersection->states.list.array = stateArray;
-    intersection->states.list.array[0] = &state;
+    /* Generate the list of states */
     intersection->states.list.count = 1;
-    intersection->states.list.size = 1;    
+    intersection->states.list.size = 1 * sizeof(MovementState_t*);
+    intersection->states.list.array = (MovementState_t**) malloc(1 * sizeof(MovementState_t*));
+    if (intersection->states.list.array == NULL) {
+        printf("Memory allocation failed - States List Array\n");
+        exit(-1);
+    }
+    intersection->states.list.array[0] = (MovementState_t*) malloc(sizeof(MovementState_t));
+    if (intersection->states.list.array[0] == NULL) {
+        printf("Memory allocation failed - State List Array Element\n");
+        exit(-1);
+    }
 
-    /* Connection of the event to the list of events */
-    state.state_time_speed.list.array = eventArray;
-    state.state_time_speed.list.array[0] = &event;
-    state.state_time_speed.list.count = 1;
-    state.state_time_speed.list.size = 1;
+    /* Initialize the state */
+    intersection->states.list.array[0]->state_time_speed.list.array = (MovementEvent_t**) malloc(sizeof(MovementEvent_t*));
+    if (intersection->states.list.array[0]->state_time_speed.list.array == NULL) {
+        printf("Memory allocation failed - State Time Speed List Array\n");
+        exit(-1);
+    }
+    intersection->states.list.array[0]->state_time_speed.list.count = 1;
+    intersection->states.list.array[0]->state_time_speed.list.size = sizeof(MovementEvent_t*);
+    intersection->states.list.array[0]->state_time_speed.list.array[0] = (MovementEvent_t*) malloc(sizeof(MovementEvent_t));
+    if (intersection->states.list.array[0]->state_time_speed.list.array[0] == NULL) {
+        printf("Memory allocation failed - State Time Speed List Array Element\n");
+        exit(-1);
+    }
 
-    /* Signal Group ID - identifier that represent the current movement, phase and topology (0 - 255) */
-    /* It's related to the MAP message, so its value = 0, which means the ID is not available or not known */
-    state.signalGroup = 0;
-
-    /* Get the current phase signal and the respective timings */
-    getStateAndTime(&event);
+    getStateAndTime(&intersection->states.list.array[0]->state_time_speed.list.array[0]);
 }
 
-/* Generate the appropriate BIT STRING to the specified intersection status */
+/* Generate the status of an intersection */
 void genIntersectionStatus(IntersectionState_t* intersection, int intStatus)
 {
-    /* Calculates the byte index of the buffer where the bit should be written */
-    int bufferIndex = intStatus / 8;
-    /* Calculates the bit position in the byte specified by bufferIndex */
-    int bufferOffset = intStatus % 8;
-
-    /* Enables the correspondent bit in the buffer */
-    intersection->status.buf[bufferIndex] = (1 << bufferOffset);
-    /* Size - size of the buffer (bytes) */
-    intersection->status.size = bufferIndex + 1;
-    /* Bits Unused - number of bits not used (0) in the last byte/octet */
-    intersection->status.bits_unused = 7 - bufferOffset;   
+    intersection->status.buf = (uint8_t*) malloc(1);
+    if (intersection->status.buf == NULL) {
+        printf("Memory allocation failed - Intersection Status Buffer\n");
+        exit(-1);
+    }
+    intersection->status.buf[0] = intStatus;
+    intersection->status.size = 1;
 }
 
-
-
-/* Get the timing values for the signal */
+/* Generate state and timing */
 void getStateAndTime(MovementEvent_t* event)
 {
-    // TODO implementar metodo para ler estado do semaforo na maquina de estados e os respetivos timings
+    /* Timing information */
+    event->timing = (TimeChangeDetails_t*) malloc(sizeof(TimeChangeDetails_t));
+    if (event->timing == NULL) {
+        printf("Memory allocation failed - Event Timing\n");
+        exit(-1);
+    }
 
-    /* Movement Phase and State - represents the current state of the traffic signal */
-    event->eventState = MovementPhaseState_protected_clearance;    
+    event->timing->startTime = (MinuteOfTheYear_t*) malloc(sizeof(MinuteOfTheYear_t));
+    if (event->timing->startTime == NULL) {
+        printf("Memory allocation failed - StartTime\n");
+        exit(-1);
+    }
+    *(event->timing->startTime) = getCurrTime();
 
-    /* Start Time - time when the future phase signal will start */
-    event->timing->startTime = 500;
+    event->timing->minEndTime = *(event->timing->startTime) + 1;
 
-    /* Min End Time - shortest end time for the current phase signal */
-    event->timing->minEndTime = 30;
-
-    /* Max End Time - longest end time for the current phase signal */
-    event->timing->maxEndTime = 70;
+    event->timing->maxEndTime = (MinuteOfTheYear_t*) malloc(sizeof(MinuteOfTheYear_t));
+    if (event->timing->maxEndTime == NULL) {
+        printf("Memory allocation failed - MaxEndTime\n");
+        exit(-1);
+    }
+    *(event->timing->maxEndTime) = *(event->timing->startTime) + 2;
 }
 
-/* Get the current time value in MinuteOfTheYear_t format */
+/* Get the current time in MinuteOfTheYear_t format */
 MinuteOfTheYear_t getCurrTime(void)
 {
-    // TODO implementar metodo para tempo atual
-    return 20000;
+    return 123456;
 }
 
-/* -------------------------------------- COMMS --------------------------------------*/
+void printIntersectionInfo(const IntersectionState_t* intersection) {
+    if (intersection == NULL) {
+        printf("Intersection is NULL\n");
+        return;
+    }
 
-int createSocket() {
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == -1) {
+    printf("Intersection ID: 0x%lx\n", intersection->id.id);
+    
+    if (intersection->name != NULL) {
+        printf("Intersection Name: %.*s\n", (int)intersection->name->size, intersection->name->buf);
+    } else {
+        printf("Intersection Name: NULL\n");
+    }
+
+    if (intersection->status.buf != NULL) {
+        printf("Intersection Status: 0x%02x\n", intersection->status.buf[0]);
+    } else {
+        printf("Intersection Status: NULL\n");
+    }
+
+    printf("Number of States: %ld\n", intersection->states.list.count);
+
+    for (int i = 0; i < intersection->states.list.count; i++) {
+        MovementState_t* state = intersection->states.list.array[i];
+        if (state == NULL) {
+            printf("State %d is NULL\n", i);
+            continue;
+        }
+
+        printf("  State %d:\n", i);
+
+        printf("    Number of Events: %ld\n", state->state_time_speed.list.count);
+
+        for (int j = 0; j < state->state_time_speed.list.count; j++) {
+            MovementEvent_t* event = state->state_time_speed.list.array[j];
+            if (event == NULL) {
+                printf("    Event %d is NULL\n", j);
+                continue;
+            }
+
+            printf("    Event %d:\n", j);
+
+            if (event->timing != NULL) {
+                printf("      Start Time: %ld\n", *(event->timing->startTime));
+                printf("      Min End Time: %ld\n", event->timing->minEndTime);
+                if (event->timing->maxEndTime != NULL) {
+                    printf("      Max End Time: %ld\n", *(event->timing->maxEndTime));
+                } else {
+                    printf("      Max End Time: NULL\n");
+                }
+            } else {
+                printf("      Timing: NULL\n");
+            }
+        }
+    }
+}
+
+
+void freeMemory(void)
+{
+    for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) 
+    {
+        if (spatMessage.spat.intersections.list.array[i]->name) 
+        {
+            free(spatMessage.spat.intersections.list.array[i]->name->buf);
+            free(spatMessage.spat.intersections.list.array[i]->name);
+        }
+        
+        for (int j = 0; j < spatMessage.spat.intersections.list.array[i]->states.list.count; j++) 
+        {
+            for (int k = 0; k < spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.count; k++) 
+            {
+                if (spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]->timing) 
+                {
+                    if (spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]->timing->startTime)
+                    {
+                        free(spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]->timing->startTime);
+                    }
+                    if (spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]->timing->maxEndTime)
+                    {
+                        free(spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]->timing->maxEndTime);
+                    }
+                    free(spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]->timing);
+                }
+                free(spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array[k]);
+            }
+            free(spatMessage.spat.intersections.list.array[i]->states.list.array[j]->state_time_speed.list.array);
+            free(spatMessage.spat.intersections.list.array[i]->states.list.array[j]);
+        }
+        free(spatMessage.spat.intersections.list.array[i]->states.list.array);
+        if (spatMessage.spat.intersections.list.array[i]->status.buf)
+        {
+            free(spatMessage.spat.intersections.list.array[i]->status.buf);
+        }
+    }
+    free(spatMessage.spat.intersections.list.array);
+}
+
+
+/* -------------------------------------- SERVER --------------------------------------*/
+
+int createSocket()
+{
+    int sockfd;
+
+    if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
+
     return sockfd;
 }
 
-void configureServerAddress(struct sockaddr_in *server_addr) {
+void configureServerAddress(struct sockaddr_in *server_addr)
+{
     memset(server_addr, 0, sizeof(*server_addr));
+
     server_addr->sin_family = AF_INET;
     server_addr->sin_port = htons(PORT);
-    if (inet_aton(SERVER_IP, &server_addr->sin_addr) == 0) {
-        perror("Invalid IP address");
-        exit(EXIT_FAILURE);
-    }
+    server_addr->sin_addr.s_addr = inet_addr(SERVER_IP);
 }
 
-void sendMessage(int sockfd, struct sockaddr_in *server_addr, char *buffer, unsigned int bytes_enc) {
-    if (sendto(sockfd, buffer, bytes_enc, 0, (struct sockaddr *)server_addr, sizeof(*server_addr)) == -1) {
-        perror("Send failed");
-        exit(EXIT_FAILURE);
+void sendMessage(int sockfd, struct sockaddr_in *server_addr, char *buffer, unsigned int bytes_enc)
+{
+    int n;
+    socklen_t len = sizeof(*server_addr);
+
+    n = sendto(sockfd, (const char *)buffer, bytes_enc, MSG_CONFIRM, (const struct sockaddr *) server_addr, len);
+
+    if (n < 0)
+    {
+        perror("Failed to send message");
+        return;
     }
+
+    printf("Sent %d bytes to the server\n", n);
 }
-
-
