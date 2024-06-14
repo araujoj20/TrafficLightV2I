@@ -1,0 +1,2 @@
+libfuzzer is not compiled-in, pretend the test went OK.
+PASS check_unber.sh (exit status: 0)
