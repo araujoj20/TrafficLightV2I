@@ -8,6 +8,7 @@
 
 #define PORT 12345
 #define MAX_MSG_SIZE 1024
+#define BROADCAST_IP "192.168.1.255"
 
 void createSocket(int *sockfd) {
     if ((*sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
@@ -26,7 +27,8 @@ void configureServerAddress(struct sockaddr_in *server_addr) {
     memset(server_addr, 0, sizeof(*server_addr));
     server_addr->sin_family = AF_INET;
     server_addr->sin_port = htons(PORT);
-    server_addr->sin_addr.s_addr = htonl(INADDR_ANY);
+    //server_addr->sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr->sin_addr.s_addr = inet_addr(BROADCAST_IP);
 }
 
 void receiveMessage(int sockfd, char *buffer, struct sockaddr_in *client_addr) {

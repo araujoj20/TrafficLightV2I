@@ -5,6 +5,7 @@
         "socket.h": "c",
         "cstdlib": "c",
         "in.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "per_decoder.h": "c"
     }
 }

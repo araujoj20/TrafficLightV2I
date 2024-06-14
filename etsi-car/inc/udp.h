@@ -1,14 +1,12 @@
 #ifndef UDP_H
 #define UDP_H
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
 
 #define PORT 12345
 #define STATION_UNIQUE_ID 0x12345454

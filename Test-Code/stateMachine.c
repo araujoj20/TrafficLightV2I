@@ -156,6 +156,10 @@ int main(void) {
             f_priority = 0;
         }
 
+        if ((currentTime - lastTime >= 1000)) {
+
+        }
+
         delay(100);
     }
     return 0;

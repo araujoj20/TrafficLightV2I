@@ -10,9 +10,6 @@
 #include "../inc/message.h"
 #include "../inc/udp.h"
 
-#define SERVER_IP "192.168.1.5"
-#define PORT 12345
-#define MAX_MSG_SIZE 10000
 
 int main(int argc, char **argv)
 {
@@ -20,13 +17,15 @@ int main(int argc, char **argv)
     uint8_t error = 0;
     uint8_t out_buffer[MAX_MSG_SIZE] = {0};
     uint16_t bytes_enc = 0;
+    int sockfd = 0;
     struct sockaddr_in broadcast_addr;
 
     // ----------/ UDP ------------
-    int sockfd = createSocket();
+    createSocket(&sockfd);
     configureBroadcast(&broadcast_addr);
     // ----------- UDP /-----------
 
+    memset(&spatMessage, 0, sizeof(spatMessage));
     error |= messageInit(&spatMessage, &intersectionArray, out_buffer);
 
     currTimeSpat = getCurrTime();
@@ -38,7 +37,6 @@ int main(int argc, char **argv)
     // --------------------/ ENCODE --------------------
 
     error |= encodeBuffer(&spatMessage, out_buffer, sizeof(out_buffer), &bytes_enc);
-    memset(&spatMessage, 0, sizeof(spatMessage));
 
     // --------------------- ENCODE /-------------------
 
@@ -56,8 +54,23 @@ int main(int argc, char **argv)
     int count = 0;
     while(count++ < 30) 
     {
+        sleep(3);
+        //MinuteOfTheYear_t currTimeSpat = getCurrTime();
+        //spatMessage.spat.timeStamp = &currTimeSpat;
+
+        printHeader(&spatMessage);
+        printIntersections(&spatMessage);
+
+        // --------------------/ ENCODE --------------------
+        //memset(&spatMessage, 0, sizeof(spatMessage));
+        //error |= messageInit(&spatMessage, &intersectionArray, out_buffer);
+
         sendMessage(sockfd, &broadcast_addr, out_buffer, bytes_enc);
-        sleep(1);
+        
+
+        memset(out_buffer, 0, sizeof(out_buffer));
+        error |= encodeBuffer(&spatMessage, out_buffer, sizeof(out_buffer), &bytes_enc);
+        
     }
 
     // ---------- CODIGO TESTE /----------------

@@ -17,13 +17,6 @@ void createSocket(int *sockfd){
     }
 }
 
-void sendMessage(int sockfd, struct sockaddr_in *broadcast_addr, char *buffer, unsigned int bytes_enc){
-    if (sendto(sockfd, buffer, bytes_enc, 0, (struct sockaddr *)broadcast_addr, sizeof(*broadcast_addr)) == -1) {
-        perror("Send failed");
-        exit(EXIT_FAILURE);
-    }
-}
-
 void configureBroadcast(struct sockaddr_in *broadcast_addr){
     memset(broadcast_addr, 0, sizeof(*broadcast_addr));
     broadcast_addr->sin_family = AF_INET;
@@ -33,15 +26,23 @@ void configureBroadcast(struct sockaddr_in *broadcast_addr){
 
 }
 
-void rxBroadcast(int* sockfd, struct sockaddr_in *broadcast_addr, socklen_t *addr_len){
-
-    if (bind(*sockfd, (struct sockaddr *)&broadcast_addr, *addr_len == -1)){
+void rxBroadcast(int* sockfd, struct sockaddr_in *broadcast_addr, socklen_t *addr_len) {
+    
+    if (bind(*sockfd, (struct sockaddr *)broadcast_addr, *addr_len) == -1) {
         perror("Bind failed");
         exit(EXIT_FAILURE);
     }
 }
 
-int receiveMessage(int sockfd, char *buffer, struct sockaddr *client_addr, socklen_t *addr_len) {
+
+void sendMessage(int sockfd, struct sockaddr_in *broadcast_addr, char *buffer, unsigned int bytes_enc){
+    if (sendto(sockfd, buffer, bytes_enc, 0, (struct sockaddr *)broadcast_addr, sizeof(*broadcast_addr)) == -1) {
+        perror("Send failed");
+        exit(EXIT_FAILURE);
+    }
+}
+
+int receiveMessage(int sockfd, char *buffer, struct sockaddr *client_addr, socklen_t *addr_len){
     int bytes_received = recvfrom(sockfd, buffer, MAX_MSG_SIZE, 0, client_addr, addr_len);
     if (bytes_received == -1) {
         perror("Receive failed");
