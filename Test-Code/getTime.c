@@ -17,7 +17,7 @@ int main() {
 
     printf("Minutes of the Year : %d\n", minutesYear);
     printf("Seconds of the Hour : %d\n", secondsHour);
-    printf("Tenths of a Second: %d\n", tenthsSecond);
+    //printf("Tenths of a Second: %d\n", tenthsSecond);
     printf("Tenths of a second in relation to the Hour: %d\n", tenthsSecond + secondsHour * 10);
 
     return 0;

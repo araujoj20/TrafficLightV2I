@@ -1,11 +1,10 @@
 {
     "files.associations": {
-        "spatem.h": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "socket.h": "c",
+        "cstdlib": "c",
         "in.h": "c",
-        "inet.h": "c",
-        "per_decoder.h": "c",
-        "array": "c",
-        "string_view": "c",
-        "initializer_list": "c"
+        "time.h": "c"
     }
 }

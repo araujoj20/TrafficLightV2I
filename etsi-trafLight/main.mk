@@ -1,12 +1,14 @@
 include Makefile.am.libasncodec
 CC = gcc
-LIBS += -lm
+LIBS += -lm -lwiringPi
 CFLAGS += -g $(ASN_MODULE_CFLAGS) -DASN_PDU_COLLECTION -I./asn1-header
 ASN_LIBRARY ?= libasncodec.a
-ASN_PROGRAM ?= trafLight
+ASN_PROGRAM ?= main
 ASN_PROGRAM_SRCS ?= \
-	trafLight.c\
-	./asn1-source/pdu_collection.c
+    src/main.c\
+    src/message.c\
+	src/udp.c\
+    ./asn1-source/pdu_collection.c
  
 ASN_MODULE_SRCS_PATCH = $(addprefix ./asn1-source/, $(ASN_MODULE_SRCS))
 
@@ -17,6 +19,9 @@ $(ASN_PROGRAM): $(ASN_LIBRARY) $(ASN_PROGRAM_SRCS:.c=.o)
 
 $(ASN_LIBRARY): $(ASN_MODULE_SRCS_PATCH:.c=.o)
 	$(AR) rcs $@ $(ASN_MODULE_SRCS_PATCH:.c=.o)
+
+src/main.o: src/main.c src/../inc/message.h
+src/message.o: src/message.c src/../inc/message.h
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -32,4 +37,3 @@ regen: regenerate-from-asn1-source
 
 regenerate-from-asn1-source:
 	asn1c -gen-PER -pdu=auto -fincludes-quoted -fcompound-names ./asn1/SPATEM-PDU-Descriptions.asn ./asn1/ITS-Container.asn ./asn1/ISO-19091.asn ./asn1/ISO-24534-3.asn
-
