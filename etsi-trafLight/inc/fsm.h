@@ -1,10 +1,14 @@
 #ifndef FSM_H
 #define FSM_H
 
+#define RASPBERRY 0
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <wiringPi.h>
-#include <wiringPiI2C.h>
+#if RASPBERRY
+    #include <wiringPi.h>
+    #include <wiringPiI2C.h>
+#endif
 #include <stdbool.h>
 #include <signal.h>
 
@@ -17,9 +21,9 @@ typedef enum {
 } LedPin;
 
 typedef enum {
-    STATE_GREEN,
+    STATE_GREEN,       // = MovementPhaseState_permissive_Movement_Allowed,
     STATE_YELLOW,
-    STATE_RED,
+    STATE_RED,         //  = MovementPhaseState_stop_And_Remain,
     STATE_EMERGENCY,
     STATE_PEDESTRIAN,
     STATES_NUMBER
@@ -47,17 +51,16 @@ State redState();
 State emergencyState();
 State pedestrianState();
 
-Operation operations[STATES_NUMBER] = {
-    {STATE_GREEN,       TIME_GREEN,      LED_GREEN,  greenState},
-    {STATE_YELLOW,      TIME_YELLOW,     LED_YELLOW, yellowState},
-    {STATE_RED,         TIME_RED,        LED_RED,    redState},
-    {STATE_EMERGENCY,   TIME_EMERGENCY,  LED_YELLOW, emergencyState},
-    {STATE_PEDESTRIAN,  TIME_PEDESTRIAN, LED_RED,    pedestrianState}
-};
+extern Operation operations[STATES_NUMBER];
 
-volatile bool pedestrianBtn = false;
-volatile bool emergencyBtn  = false;
-const unsigned int debounceDelay = 50;
+extern volatile bool pedestrianBtn;
+extern volatile bool emergencyBtn;
+extern const unsigned int debounceDelay;
 
+void setup();
+
+#if RASPBERRY == 0
+    unsigned long millis();
+#endif
 
 #endif // FSM_H

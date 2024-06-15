@@ -6,6 +6,10 @@
         "cstdlib": "c",
         "in.h": "c",
         "time.h": "c",
-        "per_decoder.h": "c"
+        "per_decoder.h": "c",
+        "stdbool.h": "c",
+        "stdlib.h": "c",
+        "unistd.h": "c",
+        "main.h": "c"
     }
 }

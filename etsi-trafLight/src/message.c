@@ -176,8 +176,15 @@ MinuteOfTheYear_t getCurrTime(void)
     return minutesYear;
 }
 
+
+void printMessage(const SPATEM_t* spatM){
+
+    printHeader(spatM);
+    printIntersections(spatM);
+}
+
 /* Print Message Header */
-void printHeader(SPATEM_t* spatM){
+void printHeader(const SPATEM_t* spatM){
 
     DEBUG_PRINT("-----------------------------------------------------------------------------------\n"
             "PDU Header:\nProtocol Version: %ld     Message ID: %ld     Station ID: 0x%lx     Time: %ld\n"
@@ -280,7 +287,7 @@ int checkConstraints(SPATEM_t *spat_message, char *out_buffer, IntersectionState
     return 0;
 }
 
-int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, char *out_buffer){
+int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, char *out_buffer, MinuteOfTheYear_t *currTimeSpat){
     
     // HEADER
     genHeader(spatMessage);
@@ -320,11 +327,14 @@ int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, 
     // Clear out_buffer
     memset(out_buffer, 0, sizeof(out_buffer));
 
+    spatMessage->spat.timeStamp = currTimeSpat;
+
     return 0;
 }
 
 int encodeBuffer(SPATEM_t *spatMessage, uint8_t *out_buffer,  size_t buffer_size, uint16_t *bytes_enc){
     DEBUG_PRINT("\nPreparing to encode the message...\n");
+    memset(out_buffer, 0, sizeof(out_buffer));
     asn_enc_rval_t ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, spatMessage, out_buffer, buffer_size);
     *bytes_enc = (ec.encoded + 7) / 8;
 

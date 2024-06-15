@@ -8,6 +8,7 @@ ASN_PROGRAM_SRCS ?= \
     src/main.c\
     src/message.c\
 	src/udp.c\
+	src/fsm.c\
     ./asn1-source/pdu_collection.c
  
 ASN_MODULE_SRCS_PATCH = $(addprefix ./asn1-source/, $(ASN_MODULE_SRCS))
@@ -22,7 +23,8 @@ $(ASN_LIBRARY): $(ASN_MODULE_SRCS_PATCH:.c=.o)
 
 src/main.o: src/main.c src/../inc/message.h
 src/message.o: src/message.c src/../inc/message.h
-#src/udp.o: src/udp.c src/../inc/udp.h
+src/udp.o: src/udp.c src/../inc/udp.h
+src/fsm.o: src/fsm.c src/../inc/fsm.h
 
 .SUFFIXES:
 .SUFFIXES: .c .o

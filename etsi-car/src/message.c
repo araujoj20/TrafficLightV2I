@@ -280,7 +280,7 @@ int checkConstraints(SPATEM_t *spat_message, char *out_buffer, IntersectionState
     return 0;
 }
 
-int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, char *out_buffer){
+int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, char *out_buffer, MinuteOfTheYear_t *currTimeSpat){
     
     // HEADER
     genHeader(spatMessage);
@@ -319,6 +319,8 @@ int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, 
 
     // Clear out_buffer
     memset(out_buffer, 0, sizeof(out_buffer));
+
+    spatMessage->spat.timeStamp = &currTimeSpat;
 
     return 0;
 }
