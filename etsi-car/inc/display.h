@@ -158,7 +158,6 @@ void ssd1306_drawPixel(int x, int y, unsigned int color);
 void ssd1306_drawFastVLine(int x, int y, int h, unsigned int color);
 void ssd1306_drawFastHLine(int x, int y, int w, unsigned int color);
 
-void ssd1306_fillRect(int x, int y, int w, int h, int fillcolor);
 
 void ssd1306_setTextSize(int s);
 void ssd1306_drawString(char *str);

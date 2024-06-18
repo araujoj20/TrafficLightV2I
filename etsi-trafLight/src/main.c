@@ -69,7 +69,7 @@ int main(int argc, char **argv)
         
         /*  Emergency Vehicle Detected */
         if (emergencyBtn || (f_emergency && (currentTime - emergencyLastTime >= 500))) {
-            
+            DEBUG_PRINT("EMERGENCY PRESSED\n");
             if (f_emergency == 0){
                 emergencyBtn = false;
                 stateLastTime = currentTime;
@@ -79,22 +79,26 @@ int main(int argc, char **argv)
             else if (f_emergency && currentTime > stateLastTime){
                 f_emergency = 0;
                 stateLastTime = currentTime;
+                currentState = nextState;
             } 
             else{
-                currentState = operations[STATE_EMERGENCY].stateFunction();
+                nextState = operations[STATE_EMERGENCY].stateFunction();
                 emergencyLastTime = currentTime;
             }
         }
         /*  Pedestrian Detected */
         else if (pedestrianBtn || f_pedestrianWaiting) {
             
-            if ((currentState != STATE_EMERGENCY) && (currentTime >= operations[currentState].timeMin)){
+            if ((currentState != STATE_EMERGENCY) && (currentTime - stateLastTime >= operations[currentState].timeMin)){
+                
+                DEBUG_PRINT("PEDESTRIAN STATE\n");
                 
                 currentState = STATE_PEDESTRIAN;
                 f_priority = 1;
                 f_pedestrianWaiting = 0;
             }
             else{
+                DEBUG_PRINT("PEDESTRIAN BUGG STATE\n");
                 f_pedestrianWaiting = 1;
             }
             pedestrianBtn = false;
@@ -104,11 +108,12 @@ int main(int argc, char **argv)
         if ((currentTime - stateLastTime >= waitTime) || f_priority ) {
             DEBUG_PRINT("Current Time: %d\n", currentTime);
             DEBUG_PRINT("State: %d\n", currentState);
+            if (f_priority == 0)
+                currentState = nextState;
             nextState = operations[currentState].stateFunction();
             waitTime  = operations[currentState].time;
             startTime = currentTime;
             stateLastTime  = currentTime;
-            currentState = nextState;
             f_priority = 0;
         }
         
@@ -120,28 +125,28 @@ int main(int argc, char **argv)
         */
 
         
-        if ((currentTime - messageLastTime >= 1000)) {
+        // if ((currentTime - messageLastTime >= 1000)) {
             
-            if (lastState != currentState){
+        //     if (lastState != currentState){
 
-                M_SET_INTERSECTION(intersectionArray, 0);
-                M_INCREMENT_COUNT(intersectionArray);
-                M_SET_STATE(intersectionArray, currentState);
-                M_SET_CURR_TIME(currTimeSpat);
-                M_SET_MAX_TIME(intersectionArray, (miliSecOfHour + operations[currentState].time)/100);
-                M_SET_MIN_TIME(intersectionArray, (miliSecOfHour + operations[currentState].timeMin)/100);
-                M_SET_START_TIME(intersectionArray, (miliSecOfHour + startTime)/100);
-                memset(buffer, 0, sizeof(buffer));
-                encodeBuffer(&spatMessage, buffer, sizeof(buffer), &bytes_enc);
-                sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
-                //printMessage(&spatMessage);
-            }
-            else{
-                sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
-            }
+        //         M_SET_INTERSECTION(intersectionArray, 0);
+        //         M_INCREMENT_COUNT(intersectionArray);
+        //         M_SET_STATE(intersectionArray, currentState);
+        //         M_SET_CURR_TIME(currTimeSpat);
+        //         M_SET_MAX_TIME(intersectionArray, (miliSecOfHour + startTime + operations[currentState].time)/100);
+        //         M_SET_MIN_TIME(intersectionArray, (miliSecOfHour + startTime + operations[currentState].timeMin)/100);
+        //         M_SET_START_TIME(intersectionArray, (miliSecOfHour + startTime)/100);
+        //         memset(buffer, 0, sizeof(buffer));
+        //         encodeBuffer(&spatMessage, buffer, sizeof(buffer), &bytes_enc);
+        //         sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
+        //         //printMessage(&spatMessage);
+        //     }
+        //     else{
+        //         sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
+        //     }
             
-            messageLastTime  = currentTime;            
-        }
+        //     messageLastTime  = currentTime;            
+        // }
 
         usleep(1000);
         //DEBUG_PRINT("Time: %d\n", currentTime);

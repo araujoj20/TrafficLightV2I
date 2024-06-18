@@ -26,6 +26,8 @@ All text above, and the splash screen below must be included in any redistributi
 
 #include "../inc/display.h"
 #include "../inc/oled_fonts.h"
+#include "../inc/message.h"
+
 #include <wiringPiI2C.h>
 
 #define true 1
@@ -698,41 +700,6 @@ void ssd1306_drawFastVLine(int x, int y, int h, unsigned int color)
 	}
 }
 
-void ssd1306_fillRect(int x, int y, int w, int h, int fillcolor)
-{
-
-	// Bounds check
-	if ((x >= WIDTH) || (y >= HEIGHT))
-		return;
-
-	// Y bounds check
-	if (y + h > HEIGHT) {
-		h = HEIGHT - y - 1;
-	}
-	// X bounds check
-	if (x + w > WIDTH) {
-		w = WIDTH - x - 1;
-	}
-
-	switch (rotation) {
-	case 1:
-		swap_values(x, y);
-		x = WIDTH - x - 1;
-		break;
-	case 2:
-		x = WIDTH - x - 1;
-		y = HEIGHT - y - 1;
-		break;
-	case 3:
-		swap_values(x, y);
-		y = HEIGHT - y - 1;
-		break;
-	}
-	int i;
-	for (i = 0; i < h; i++)
-		ssd1306_drawFastHLine(x, y + i, w, fillcolor);
-}
-
 int textsize = 1;
 int wrap = 1;
 
@@ -788,10 +755,7 @@ void ssd1306_drawChar(int x, int y, unsigned char c, int color, int size)
 			if (line & 0x1) {
 				if (size == 1)	// default size
 					ssd1306_drawPixel(x + i, y + j, color);
-				else {	// big size
-					ssd1306_fillRect(x + (i * size),
-							 y + (j * size), size,
-							 size, color);
+				else {
 				}
 			}
 			line >>= 1;
@@ -800,26 +764,6 @@ void ssd1306_drawChar(int x, int y, unsigned char c, int color, int size)
 }
 
 #define M_STATE(msg, i) ((msg)->spat.intersections.list.array[(i)]->states.list.array[0]->state_time_speed.list.array[0]->eventState)
-int daysMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-void convertMinutesToCalendar(int minutesOfYear, int* months, int* days, int* hours, int* minutes) {
-
-    int totalDays = minutesOfYear / (60 * 24);
-    *hours = (minutesOfYear % (60 * 24)) / 60;
-    *minutes = minutesOfYear % 60;
-
-    int dayOfYear = 0;
-    *months = 1;
-
-    for (int i = 0; i < 12; i++) {
-        if (dayOfYear + daysMonth[i] >= totalDays) {
-            *days = totalDays - dayOfYear;
-            break;
-        }
-        dayOfYear += daysMonth[i];
-        (*months)++;
-    }
-}
 
 void printDisplay(SPATEM_t *decSpat) {
     ssd1306_clearDisplay();
@@ -854,7 +798,7 @@ void printDisplay(SPATEM_t *decSpat) {
         strcat(ptrText, "\n");
     }
 
-    printf("%s", ptrText); 
+    //printf("%s", ptrText); 
     ssd1306_drawString(ptrText); 
     ssd1306_display(); 
     // delay(3000);

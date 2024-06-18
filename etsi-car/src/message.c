@@ -195,11 +195,14 @@ void printMessage(const SPATEM_t* spatM){
 /* Print Message Header */
 void printHeader(const SPATEM_t* spatM){
 
+    int months, days, hours, minutes;
+    convertMinutesToCalendar((int)*spatM->spat.timeStamp, &months, &days, &hours, &minutes);
+
     DEBUG_PRINT("-----------------------------------------------------------------------------------\n"
-            "PDU Header:\nProtocol Version: %ld     Message ID: %ld     Station ID: 0x%lx     Time: %ld\n"
+            "PDU Header:\nProtocol Version: %ld  Message ID: %ld  Station ID: 0x%lx  Date: %d/%d - %dh%dm\n"
             "-----------------------------------------------------------------------------------\n",
             spatM->header.protocolVersion, spatM->header.messageID,
-            spatM->header.stationID, *(spatM->spat.timeStamp));
+            spatM->header.stationID, days, months, hours, minutes);
 }
 
 void printIntersections(const SPATEM_t* spatM)
@@ -221,20 +224,24 @@ static void printIntersectionInfo(const IntersectionState_t* intersection)
         return;
     }
 
+    TimeMark_t startTime = *intersection->states.list.array[0]->state_time_speed.list.array[0]->timing->startTime;
+    TimeMark_t minTime = intersection->states.list.array[0]->state_time_speed.list.array[0]->timing->minEndTime;
+    TimeMark_t maxTime = *intersection->states.list.array[0]->state_time_speed.list.array[0]->timing->maxEndTime;
+
     MovementState_t* state = intersection->states.list.array[0];
     MovementEvent_t* event = state->state_time_speed.list.array[0];
 
     DEBUG_PRINT(" Intersection ID     : 0x%-13lx|\t", intersection->id.id);
     DEBUG_PRINT(" Traffic Light State : %ld\n", event->eventState);
     DEBUG_PRINT(" Intersection Name   : %-15s|\t", intersection->name->buf);
-    DEBUG_PRINT(" Start Time          : %ld\n", *(event->timing->startTime));
+    DEBUG_PRINT(" Start Time          : %02dm%02ds\n", (int)(startTime / 600), (int)((startTime / 10) % 60));
     DEBUG_PRINT(" Intersection Status : 0x%02x           |\t", intersection->status.buf[0]);
-    DEBUG_PRINT(" Min End Time        : %ld\n", event->timing->minEndTime);
+    DEBUG_PRINT(" Min End Time        : %02dm%02ds\n", (int)(minTime / 600), (int)((minTime / 10) % 60));
     DEBUG_PRINT(" Message Count       : %-15ld|\t", intersection->revision);
-    DEBUG_PRINT(" Max End Time        : %ld\n", *(event->timing->maxEndTime));
+    DEBUG_PRINT(" Max End Time        : %02dm%02ds\n", (int)(maxTime / 600), (int)((maxTime / 10) % 60));
     DEBUG_PRINT("-----------------------------------------------------------------------------------\n");
 }
-
+   
 /* Free dynamically allocated memory - supports more than one event or state*/
 void freeMemory(SPATEM_t* spatM)
 {
@@ -374,4 +381,25 @@ int decodeBuffer(SPATEM_t *decSpatM, IntersectionState_t *intersectionArray, cha
     }
 
     return 0;
+}
+
+int daysMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+void convertMinutesToCalendar(int minutesOfYear, int* months, int* days, int* hours, int* minutes){
+
+    int totalDays = minutesOfYear / (60 * 24);
+    *hours = (minutesOfYear % (60 * 24)) / 60;
+    *minutes = minutesOfYear % 60;
+
+    int dayOfYear = 0;
+    *months = 1;
+
+    for (int i = 0; i < 12; i++) {
+        if (dayOfYear + daysMonth[i] >= totalDays) {
+            *days = totalDays - dayOfYear;
+            break;
+        }
+        dayOfYear += daysMonth[i];
+        (*months)++;
+    }
 }

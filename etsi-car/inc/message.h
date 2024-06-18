@@ -39,6 +39,7 @@ typedef struct {
     const char* intersectionNames[MAX_OF_INTERSECTIONS];
 } IntersectionData;
 
+extern int daysMonth[];
 
 extern SPATEM_t spatMessage;
 extern SPATEM_t decSpatMessage;
@@ -57,5 +58,6 @@ int checkConstraints(SPATEM_t *spat_message, char *out_buffer, IntersectionState
 int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, const IntersectionData *interData, char *out_buffer, MinuteOfTheYear_t *currTimeSpat);
 int encodeBuffer(SPATEM_t *spatMessage, uint8_t *out_buffer,  size_t buffer_size, uint16_t *bytes_enc);
 int decodeBuffer(SPATEM_t *decoded_spatem, IntersectionState_t *intersectionArray, char *out_buffer, uint16_t bytes_enc);
+void convertMinutesToCalendar(int minutesOfYear, int* months, int* days, int* hours, int* minutes);
 
 #endif // MESSAGE_H

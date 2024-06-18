@@ -9,8 +9,8 @@ Operation operations[STATES_NUMBER] = {
     {STATE_GREEN,       TIME_GREEN,      TIME_MIN_GREEN,       LED_GREEN,  greenState},
     {STATE_YELLOW,      TIME_YELLOW,     TIME_MIN_YELLOW,      LED_YELLOW, yellowState},
     {STATE_RED,         TIME_RED,        TIME_MIN_RED,         LED_RED,    redState},
-    {STATE_EMERGENCY,   TIME_EMERGENCY,  TIME_MIN_EMERGENCY,   LED_YELLOW, emergencyState},
-    {STATE_PEDESTRIAN,  TIME_PEDESTRIAN, TIME_MIN_PEDESTRIAN,  LED_RED,    pedestrianState}
+    {STATE_PEDESTRIAN,  TIME_PEDESTRIAN, TIME_MIN_PEDESTRIAN,  LED_RED,    pedestrianState},
+    {STATE_EMERGENCY,   TIME_EMERGENCY,  TIME_MIN_EMERGENCY,   LED_YELLOW, emergencyState}
 };
 
 #if RASPBERRY == 0
