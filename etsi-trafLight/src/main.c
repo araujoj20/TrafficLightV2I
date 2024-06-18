@@ -12,12 +12,18 @@
 #include "../inc/fsm.h"
 
 int main(int argc, char **argv)
-{
-    MinuteOfTheYear_t currTimeSpat;
-    uint8_t out_buffer[MAX_MSG_SIZE] = {0};
+{   
+    MinuteOfTheYear_t currTimeSpat = 0;
+    uint8_t buffer[MAX_MSG_SIZE] = {0};
     uint16_t bytes_enc = 0;
     int sockfd = 0;
     struct sockaddr_in broadcast_addr;
+
+    IntersectionData interData = {
+        .intersectionIDs    = {INTER_ID1, INTER_ID2, INTER_ID3, INTER_ID4},
+        .intersectionSTATUS = {INTER_STATUS1, INTER_STATUS2, INTER_STATUS3, INTER_STATUS4},
+        .intersectionNames  = {INTER_NAME1, INTER_NAME2, INTER_NAME3, INTER_NAME4}
+    };
 
     // ----------/ UDP ------------
     createSocket(&sockfd);
@@ -26,19 +32,22 @@ int main(int argc, char **argv)
 
     // --------------------/ MESSAGE --------------------
     //memset(&spatMessage, 0, sizeof(spatMessage));
-    messageInit(&spatMessage, &intersectionArray, out_buffer, &currTimeSpat);
+    spatMessage.spat.timeStamp = &currTimeSpat;
+    currTimeSpat = 100;
+    messageInit(&spatMessage, &intersectionArray, &interData, buffer, &currTimeSpat);
     // --------------------- MESSAGE /-------------------
-
+    
     // ----------/ CODIGO TESTE ----------------
 
     setup();
     unsigned char f_priority = 0;
+    unsigned char f_emergency = 0;
+    unsigned char f_pedestrianWaiting = 0;
     unsigned int currentTime = 0;
-    unsigned int lastTime = 0;
     unsigned int waitTime = 0;
     State currentState  = STATE_GREEN;
     State nextState     = STATE_GREEN;
-
+    State lastState     = STATE_RED;
 
     /*  Main Program Loop
             
@@ -46,30 +55,59 @@ int main(int argc, char **argv)
         - Cant always change the states of emergency and pedestrian !!!
         - fsm.c, all the states need extra code to work as it should
     */
+
+    unsigned int miliSecOfHour = getMillisecondsOfHour();
+    unsigned int firstTime = millis();
+    unsigned int stateLastTime = firstTime;
+    unsigned int messageLastTime = firstTime;
+    unsigned int emergencyLastTime = firstTime;
+    unsigned int startTime = firstTime;
+    
     while(1){
 
-        currentTime = millis();
+        currentTime = millis() - firstTime;
         
         /*  Emergency Vehicle Detected */
-        if (emergencyBtn) {
-            currentState = STATE_EMERGENCY;
-            emergencyBtn = false;
-            f_priority = 1;
+        if (emergencyBtn || (f_emergency && (currentTime - emergencyLastTime >= 500))) {
+            
+            if (f_emergency == 0){
+                emergencyBtn = false;
+                stateLastTime = currentTime;
+                f_emergency = 1;
+                startTime = currentTime;
+            }
+            else if (f_emergency && currentTime > stateLastTime){
+                f_emergency = 0;
+                stateLastTime = currentTime;
+            } 
+            else{
+                currentState = operations[STATE_EMERGENCY].stateFunction();
+                emergencyLastTime = currentTime;
+            }
         }
         /*  Pedestrian Detected */
-        else if (pedestrianBtn) {
-            currentState = STATE_PEDESTRIAN;
+        else if (pedestrianBtn || f_pedestrianWaiting) {
+            
+            if ((currentState != STATE_EMERGENCY) && (currentTime >= operations[currentState].timeMin)){
+                
+                currentState = STATE_PEDESTRIAN;
+                f_priority = 1;
+                f_pedestrianWaiting = 0;
+            }
+            else{
+                f_pedestrianWaiting = 1;
+            }
             pedestrianBtn = false;
-            f_priority = 1;
         }
-    
+
         /*  States Change if nothing happen ( Green - Yellow - Red ) */
-        if ((currentTime - lastTime >= waitTime) || f_priority) {
+        if ((currentTime - stateLastTime >= waitTime) || f_priority ) {
             DEBUG_PRINT("Current Time: %d\n", currentTime);
             DEBUG_PRINT("State: %d\n", currentState);
-            nextState = operations[currentState].nextStateFunction();
+            nextState = operations[currentState].stateFunction();
             waitTime  = operations[currentState].time;
-            lastTime  = currentTime;
+            startTime = currentTime;
+            stateLastTime  = currentTime;
             currentState = nextState;
             f_priority = 0;
         }
@@ -80,21 +118,33 @@ int main(int argc, char **argv)
             - Message Counter only increments when message has some change
             - Same as above, only encode if message has a change
         */
-        if ((currentTime - lastTime >= 1000)) {
-            lastTime  = currentTime;            
-            currentState = (currentState + 1) % STATES_NUMBER;
 
-            M_SET_CURR_TIME(currTimeSpat);
-            M_SET_INTERSECTION(intersectionArray, 2);
-            M_INCREMENT_COUNT(intersectionArray);
-            M_SET_STATE(intersectionArray, currentState);
+        
+        if ((currentTime - messageLastTime >= 1000)) {
             
-            encodeBuffer(&spatMessage, out_buffer, sizeof(out_buffer), &bytes_enc);
-            printMessage(&spatMessage);
+            if (lastState != currentState){
+
+                M_SET_INTERSECTION(intersectionArray, 0);
+                M_INCREMENT_COUNT(intersectionArray);
+                M_SET_STATE(intersectionArray, currentState);
+                M_SET_CURR_TIME(currTimeSpat);
+                M_SET_MAX_TIME(intersectionArray, (miliSecOfHour + operations[currentState].time)/100);
+                M_SET_MIN_TIME(intersectionArray, (miliSecOfHour + operations[currentState].timeMin)/100);
+                M_SET_START_TIME(intersectionArray, (miliSecOfHour + startTime)/100);
+                memset(buffer, 0, sizeof(buffer));
+                encodeBuffer(&spatMessage, buffer, sizeof(buffer), &bytes_enc);
+                sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
+                //printMessage(&spatMessage);
+            }
+            else{
+                sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
+            }
             
-            sendMessage(sockfd, &broadcast_addr, out_buffer, bytes_enc);
+            messageLastTime  = currentTime;            
         }
+
         usleep(1000);
+        //DEBUG_PRINT("Time: %d\n", currentTime);
     }
     // ---------- CODIGO TESTE /----------------
 
@@ -102,7 +152,7 @@ int main(int argc, char **argv)
     close(sockfd);
 
     /* Free allocated memory */
-    freeMemory();
+    freeMemory(&spatMessage);
     free(intersectionArray);
 
     return 0;

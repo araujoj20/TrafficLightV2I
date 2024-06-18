@@ -1,11 +1,8 @@
 #include "../inc/message.h"
 
 SPATEM_t spatMessage;
-SPATEM_t* decoded_spatem = &spatMessage;
+SPATEM_t decSpatMessage;
 IntersectionState_t* intersectionArray;
-IntersectionID_t intersectionIDs[MAX_OF_INTERSECTIONS] = {INTERSECTION_ID1, INTERSECTION_ID2, INTERSECTION_ID3, INTERSECTION_ID4};
-e_IntersectionStatusObject intersectionSTATUS[MAX_OF_INTERSECTIONS] = {STATUS_1, STATUS_2, STATUS_3, STATUS_4};
-const char* intersectionNames[MAX_OF_INTERSECTIONS] = {"First INT", "Second INT", "Third INT", "Fourth INT"};
 
 /* -------------------------- Static Functions -----------------------------*/
 static void printIntersectionInfo(const IntersectionState_t* intersection);
@@ -13,21 +10,21 @@ static void printIntersectionInfo(const IntersectionState_t* intersection);
 /* -------------------------------------- DF and DE --------------------------------------*/
 
 /* Generate the SPATEM Header */
-void genHeader(SPATEM_t* spatMessage)
+void genHeader(SPATEM_t* spatM)
 {
     /* Protocol Version - version of the ITS payload contained in the message */
-    spatMessage->header.protocolVersion = 1;
+    spatM->header.protocolVersion = 1;
 
     /* Message ID - type of the ITS payload contained in the message */
-    spatMessage->header.messageID = ItsPduHeader__messageID_spatem;
+    spatM->header.messageID = ItsPduHeader__messageID_spatem;
 
     /* Station ID - unique identifier of the ITS-S originating the message */
-    spatMessage->header.stationID = STATION_ID;
+    spatM->header.stationID = STATION_ID;
 
 }
 
 /* Generate an intersection */
-void genIntersection(IntersectionState_t* intersection, int int_index)
+void genIntersection(IntersectionState_t* intersection, const IntersectionData *interData, int int_index)
 {
     int i = int_index;
     if (i < 0 || i >= NUM_OF_INTERSECTIONS) {
@@ -35,7 +32,7 @@ void genIntersection(IntersectionState_t* intersection, int int_index)
     }
 
     /* Intersection ID */
-    intersection->id.id = intersectionIDs[i];
+    intersection->id.id = interData->intersectionIDs[i];
 
     /* Intersection name */
     intersection->name = (DescriptiveName_t*) malloc(sizeof(DescriptiveName_t));
@@ -43,18 +40,18 @@ void genIntersection(IntersectionState_t* intersection, int int_index)
         DEBUG_PRINT("Memory allocation failed - Intersection Name\n");
         exit(-1);
     }
-    size_t name_len = strlen(intersectionNames[i]);
+    size_t name_len = strlen(interData->intersectionNames[i]);
     intersection->name->buf = (uint8_t*) malloc(name_len + 1);
     if (intersection->name->buf == NULL) {
         DEBUG_PRINT("Memory allocation failed - Intersection Name Buffer\n");
         exit(-1);
     }
-    memcpy(intersection->name->buf, intersectionNames[i], name_len);
+    memcpy(intersection->name->buf, interData->intersectionNames[i], name_len);
     intersection->name->buf[name_len] = '\0';
     intersection->name->size = name_len;
 
     /* Intersection status */
-    genIntersectionStatus(intersection, intersectionSTATUS[i]);
+    genIntersectionStatus(intersection, interData->intersectionSTATUS[i]);
 
     /* Allocate and initialize MovementState_t array for 1 movement (for simplicity) */
     MovementState_t* movementArray = (MovementState_t*) malloc(1 * sizeof(MovementState_t));
@@ -161,23 +158,42 @@ MinuteOfTheYear_t getCurrTime(void)
 {
     struct timeval tmVal;
     gettimeofday(&tmVal, NULL);
-
+    
     struct tm *tmInfo;
     tmInfo = localtime(&tmVal.tv_sec);
 
     MinuteOfTheYear_t minutesYear = (tmInfo->tm_yday * 24 * 60) + (tmInfo->tm_hour * 60) + tmInfo->tm_min;
     
-    int secondsHour = tmInfo->tm_min * 60 + tmInfo->tm_sec;
-    int tenthsSecond = (tmVal.tv_usec / 100000) % 10;
+    
 
     //DEBUG_PRINT("Seconds of the Hour : %d\n", secondsHour);
     //DEBUG_PRINT("Tenths of a second in relation to the Hour: %d\n", tenthsSecond + secondsHour * 10);
 
     return minutesYear;
 }
+unsigned int getTenthsSecOfHour(){
+
+    struct timeval tmVal;
+    gettimeofday(&tmVal, NULL);
+
+    struct tm *tmInfo;
+    tmInfo = localtime(&tmVal.tv_sec);
+
+    int secondsHour = tmInfo->tm_min * 60 + tmInfo->tm_sec;
+    int tenthsSecond = (tmVal.tv_usec / 100000) % 10;
+
+    return ((secondsHour*10) + tenthsSecond); 
+}
+
+
+void printMessage(const SPATEM_t* spatM){
+
+    printHeader(spatM);
+    printIntersections(spatM);
+}
 
 /* Print Message Header */
-void printHeader(SPATEM_t* spatM){
+void printHeader(const SPATEM_t* spatM){
 
     DEBUG_PRINT("-----------------------------------------------------------------------------------\n"
             "PDU Header:\nProtocol Version: %ld     Message ID: %ld     Station ID: 0x%lx     Time: %ld\n"
@@ -220,10 +236,10 @@ static void printIntersectionInfo(const IntersectionState_t* intersection)
 }
 
 /* Free dynamically allocated memory - supports more than one event or state*/
-void freeMemory(void)
+void freeMemory(SPATEM_t* spatM)
 {
     for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) {
-        IntersectionState_t* intersection = spatMessage.spat.intersections.list.array[i];
+        IntersectionState_t* intersection = spatM->spat.intersections.list.array[i];
         if (intersection->name) {
             if (intersection->name->buf) {
                 free(intersection->name->buf);
@@ -254,7 +270,7 @@ void freeMemory(void)
         }
         free(intersection->states.list.array);
     }
-    free(spatMessage.spat.intersections.list.array);
+    free(spatM->spat.intersections.list.array);
 }
 
 int checkConstraints(SPATEM_t *spat_message, char *out_buffer, IntersectionState_t *intersectionArray){
@@ -280,10 +296,10 @@ int checkConstraints(SPATEM_t *spat_message, char *out_buffer, IntersectionState
     return 0;
 }
 
-int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, char *out_buffer, MinuteOfTheYear_t *currTimeSpat){
+int messageInit(SPATEM_t *spatM, IntersectionState_t **intersectionArray, const IntersectionData *interData, char *out_buffer, MinuteOfTheYear_t *currTimeSpat){
     
     // HEADER
-    genHeader(spatMessage);
+    genHeader(spatM);
 
     // Allocate memory for the intersection array
     *intersectionArray = (IntersectionState_t*) malloc(NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t));
@@ -293,41 +309,42 @@ int messageInit(SPATEM_t *spatMessage, IntersectionState_t **intersectionArray, 
     }
 
     // Allocate memory for the array of the intersections list
-    spatMessage->spat.intersections.list.array = (IntersectionState_t**) malloc(NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t*));
-    if (spatMessage->spat.intersections.list.array == NULL) {
-        DEBUG_PRINT("Memory allocation failed - spatMessage.spat.intersections.list.array\n");
+    spatM->spat.intersections.list.array = (IntersectionState_t**) malloc(NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t*));
+    if (spatM->spat.intersections.list.array == NULL) {
+        DEBUG_PRINT("Memory allocation failed - spatM.spat.intersections.list.array\n");
         free(*intersectionArray);
         return -1;
     }
 
     // Initialize the array pointers
     for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) {
-        spatMessage->spat.intersections.list.array[i] = &(*intersectionArray)[i];
+        spatM->spat.intersections.list.array[i] = &(*intersectionArray)[i];
     }
 
-    spatMessage->spat.intersections.list.count = NUM_OF_INTERSECTIONS;
-    spatMessage->spat.intersections.list.size = NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t*);
+    spatM->spat.intersections.list.count = NUM_OF_INTERSECTIONS;
+    spatM->spat.intersections.list.size = NUM_OF_INTERSECTIONS * sizeof(IntersectionState_t*);
 
     // Generate each intersection
     for (int i = 0; i < NUM_OF_INTERSECTIONS; i++) {
-        genIntersection(&(*intersectionArray)[i], i);
+        genIntersection(&(*intersectionArray)[i], interData, i);
     }
 
     // Check constraints
-    if (checkConstraints(spatMessage, out_buffer, *intersectionArray) != 0)
+    if (checkConstraints(spatM, out_buffer, *intersectionArray) != 0)
         return -1;
 
     // Clear out_buffer
     memset(out_buffer, 0, sizeof(out_buffer));
 
-    spatMessage->spat.timeStamp = &currTimeSpat;
+    spatM->spat.timeStamp = currTimeSpat;
 
     return 0;
 }
 
-int encodeBuffer(SPATEM_t *spatMessage, uint8_t *out_buffer,  size_t buffer_size, uint16_t *bytes_enc){
+int encodeBuffer(SPATEM_t *spatM, uint8_t *out_buffer,  size_t buffer_size, uint16_t *bytes_enc){
     DEBUG_PRINT("\nPreparing to encode the message...\n");
-    asn_enc_rval_t ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, spatMessage, out_buffer, buffer_size);
+    memset(out_buffer, 0, sizeof(out_buffer));
+    asn_enc_rval_t ec = uper_encode_to_buffer(&asn_DEF_SPATEM, NULL, spatM, out_buffer, buffer_size);
     *bytes_enc = (ec.encoded + 7) / 8;
 
     if (ec.encoded > 0) {
@@ -344,15 +361,15 @@ int encodeBuffer(SPATEM_t *spatMessage, uint8_t *out_buffer,  size_t buffer_size
     return 0;
 }
 
-int decodeBuffer(SPATEM_t *decoded_spatem, IntersectionState_t *intersectionArray, char *out_buffer, uint16_t bytes_enc){
+int decodeBuffer(SPATEM_t *decSpatM, IntersectionState_t *intersectionArray, char *out_buffer, uint16_t bytes_enc){
     
     DEBUG_PRINT("\nPreparing to decode the message...\n");
 
-    asn_dec_rval_t dc = uper_decode_complete(NULL, &asn_DEF_SPATEM, (void **)&decoded_spatem, out_buffer, bytes_enc);
+    asn_dec_rval_t dc = uper_decode_complete(NULL, &asn_DEF_SPATEM, (void **)&decSpatM, out_buffer, bytes_enc);
     if (dc.code != RC_OK) {
         DEBUG_PRINT("Error decoding buffer. Bits decoded: %ld \n", dc.consumed);
         free(intersectionArray);
-        free(decoded_spatem->spat.intersections.list.array);
+        free(decSpatM->spat.intersections.list.array);
         return -1;
     }
 

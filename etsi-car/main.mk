@@ -1,6 +1,6 @@
 include Makefile.am.libasncodec
 CC = gcc
-LIBS += -lm #-lwiringPi
+LIBS += -lm -lwiringPi
 CFLAGS += -g $(ASN_MODULE_CFLAGS) -DASN_PDU_COLLECTION -I./asn1-header
 ASN_LIBRARY ?= libasncodec.a
 ASN_PROGRAM ?= main
@@ -8,6 +8,7 @@ ASN_PROGRAM_SRCS ?= \
 	src/main.c\
 	src/message.c\
 	src/udp.c\
+	src/display.c\
 	./asn1-source/pdu_collection.c
  
 ASN_MODULE_SRCS_PATCH = $(addprefix ./asn1-source/, $(ASN_MODULE_SRCS))

@@ -6,9 +6,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "asn1-header/SPATEM.h"
-#include "asn1-header/per_encoder.h"
-#include "asn1-header/per_decoder.h"
+#include "../asn1-header/SPATEM.h"
+#include "../asn1-header/per_encoder.h"
+#include "../asn1-header/per_decoder.h"
 
 #define PORT 12345
 #define MAX_MSG_SIZE 1024
@@ -173,11 +173,4 @@ int main(int ac, char **av)
     close(sockfd);
 
     return 0;
-}
-
-void sendMessage(int sockfd, struct sockaddr_in *broadcast_addr, char *buffer, unsigned int bytes_enc){
-    if (sendto(sockfd, buffer, bytes_enc, 0, (struct sockaddr *)broadcast_addr, sizeof(*broadcast_addr)) == -1) {
-        perror("Send failed");
-        exit(EXIT_FAILURE);
-    }
 }

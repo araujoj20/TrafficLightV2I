@@ -6,11 +6,11 @@ volatile bool emergencyBtn  = false;
 const unsigned int debounceDelay = 50;
 
 Operation operations[STATES_NUMBER] = {
-    {STATE_GREEN,       TIME_GREEN,      LED_GREEN,  greenState},
-    {STATE_YELLOW,      TIME_YELLOW,     LED_YELLOW, yellowState},
-    {STATE_RED,         TIME_RED,        LED_RED,    redState},
-    {STATE_EMERGENCY,   TIME_EMERGENCY,  LED_YELLOW, emergencyState},
-    {STATE_PEDESTRIAN,  TIME_PEDESTRIAN, LED_RED,    pedestrianState}
+    {STATE_GREEN,       TIME_GREEN,      TIME_MIN_GREEN,       LED_GREEN,  greenState},
+    {STATE_YELLOW,      TIME_YELLOW,     TIME_MIN_YELLOW,      LED_YELLOW, yellowState},
+    {STATE_RED,         TIME_RED,        TIME_MIN_RED,         LED_RED,    redState},
+    {STATE_EMERGENCY,   TIME_EMERGENCY,  TIME_MIN_EMERGENCY,   LED_YELLOW, emergencyState},
+    {STATE_PEDESTRIAN,  TIME_PEDESTRIAN, TIME_MIN_PEDESTRIAN,  LED_RED,    pedestrianState}
 };
 
 #if RASPBERRY == 0
@@ -64,35 +64,51 @@ void setup(){
     #endif
 }
 
+void clearLeds() {
+    #if RASPBERRY
+        digitalWrite(LED_RED, LOW);
+        digitalWrite(LED_YELLOW, LOW);
+        digitalWrite(LED_GREEN, LOW);
+    #endif
+}
+
 void lightLed(LedPin ledColor) {
     #if RASPBERRY
-        digitalWrite(LED_RED, (ledColor == LED_RED) ? HIGH : LOW);
-        digitalWrite(LED_YELLOW, (ledColor == LED_YELLOW) ? HIGH : LOW);
-        digitalWrite(LED_GREEN, (ledColor == LED_GREEN) ? HIGH : LOW);
+        digitalWrite(ledColor, HIGH);
     #endif
 }
 
 State greenState() {
+    clearLeds();
     lightLed(LED_GREEN);
     return STATE_YELLOW;
 }
 
 State yellowState() {
+    clearLeds();
     lightLed(LED_YELLOW);
     return STATE_RED;
 }
 
 State redState() {
+    clearLeds();
     lightLed(LED_RED);
     return STATE_GREEN;
 }
 
 State emergencyState() {
-    lightLed(LED_YELLOW);
-    return STATE_RED;
+    static unsigned char state = 1;
+    if (state)
+        clearLeds();
+    else
+        lightLed(LED_RED);
+
+    return STATE_GREEN;
 }
 
 State pedestrianState() {
+    clearLeds();
     lightLed(LED_RED);
+    lightLed(LED_YELLOW);
     return STATE_GREEN;
 }

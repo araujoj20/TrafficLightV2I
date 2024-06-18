@@ -799,33 +799,63 @@ void ssd1306_drawChar(int x, int y, unsigned char c, int color, int size)
 	}
 }
 
-void printDisplay(SPATEM_t *decoded_spatem){
-    
-	ssd1306_clearDisplay();
+#define M_STATE(msg, i) ((msg)->spat.intersections.list.array[(i)]->states.list.array[0]->state_time_speed.list.array[0]->eventState)
+int daysMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-	static char arrayChar[MAX_DISP_LINES][MAX_DISP_CHARS];
-    static char texto[MAX_DISP_CHARS*MAX_DISP_LINES]; 
-    static char* ptrTexto = texto;
+void convertMinutesToCalendar(int minutesOfYear, int* months, int* days, int* hours, int* minutes) {
 
-	texto[0] = '\0';
+    int totalDays = minutesOfYear / (60 * 24);
+    *hours = (minutesOfYear % (60 * 24)) / 60;
+    *minutes = minutesOfYear % 60;
 
-    sprintf(arrayChar[0], "**ITS PDU HEADER**");
-    sprintf(arrayChar[1], "Version: %ld", decoded_spatem->header.protocolVersion);
-    sprintf(arrayChar[2], "message: %ld", decoded_spatem->header.messageID);
-    sprintf(arrayChar[3], "station: %ld", decoded_spatem->header.stationID);
-    sprintf(arrayChar[4], "**SPAT PAYLOAD**");
-    sprintf(arrayChar[5], "timeStamp: %ld", *(decoded_spatem->spat.timeStamp));
-    sprintf(arrayChar[6], "ID: %ld", decoded_spatem->spat.intersections.list.array[0]->id.id);
-	sprintf(arrayChar[7], "Name: %*s", (int)decoded_spatem->spat.intersections.list.array[0]->name->size,
-            decoded_spatem->spat.intersections.list.array[0]->name->buf);
+    int dayOfYear = 0;
+    *months = 1;
 
-    for (int i = 0; i < MAX_DISP_LINES; i++) {
-        strcat(ptrTexto, arrayChar[i]);
-        strcat(ptrTexto, "\n");
+    for (int i = 0; i < 12; i++) {
+        if (dayOfYear + daysMonth[i] >= totalDays) {
+            *days = totalDays - dayOfYear;
+            break;
+        }
+        dayOfYear += daysMonth[i];
+        (*months)++;
     }
-    printf("%s", ptrTexto);
+}
 
-	ssd1306_drawString(ptrTexto);
-	ssd1306_display();
-    //delay(3000);
+void printDisplay(SPATEM_t *decSpat) {
+    ssd1306_clearDisplay();
+
+    static char arPrt[MAX_DISP_LINES][MAX_DISP_CHARS];
+    static char text[MAX_DISP_CHARS * MAX_DISP_LINES];
+    static char* ptrText = text;
+
+    text[0] = '\0';
+
+    TimeMark_t startTime = *decSpat->spat.intersections.list.array[0]->states.list.array[0]->state_time_speed.list.array[0]->timing->startTime;
+    TimeMark_t minTime = decSpat->spat.intersections.list.array[0]->states.list.array[0]->state_time_speed.list.array[0]->timing->minEndTime;
+    TimeMark_t maxTime = *decSpat->spat.intersections.list.array[0]->states.list.array[0]->state_time_speed.list.array[0]->timing->maxEndTime;
+
+    int months, days, hours, minutes;
+    convertMinutesToCalendar((int)*decSpat->spat.timeStamp, &months, &days, &hours, &minutes);
+
+    sprintf(arPrt[0], "Date: %d/%d - %dh%dm", days, months, hours, minutes);
+    sprintf(arPrt[1], "Name:%*s", (int)decSpat->spat.intersections.list.array[0]->name->size,
+                                decSpat->spat.intersections.list.array[0]->name->buf);
+    sprintf(arPrt[2], "ID: %ld", decSpat->spat.intersections.list.array[0]->id.id);
+    sprintf(arPrt[3], "State: %2ld", M_STATE(decSpat, 0));
+    sprintf(arPrt[4], "T Start: %02dh%02dm%02ds", hours, (int)(startTime / 600), (int)((startTime / 10) % 60));
+    sprintf(arPrt[5], "T Min: %2dh%02dm%02ds", hours, (int)(minTime / 600), (int)((minTime / 10) % 60));
+    sprintf(arPrt[6], "T Max: %2dh%02dm%02ds", hours, (int)(maxTime / 600), (int)((maxTime / 10) % 60));
+    sprintf(arPrt[7], "Msg Count: %ld", decSpat->spat.intersections.list.array[0]->revision);
+    sprintf(arPrt[8], " ");
+
+    ptrText[0] = '\0';
+    for (int i = 0; i < MAX_DISP_LINES; i++) {
+        strcat(ptrText, arPrt[i]);
+        strcat(ptrText, "\n");
+    }
+
+    printf("%s", ptrText); 
+    ssd1306_drawString(ptrText); 
+    ssd1306_display(); 
+    // delay(3000);
 }
