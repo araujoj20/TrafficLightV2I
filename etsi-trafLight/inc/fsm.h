@@ -18,7 +18,7 @@ typedef enum {
     LED_RED         = 17, 
     BTN_PEDESTRIAN  = 23,
     BTN_EMERGENCY   = 24
-} LedPin;
+} Pin;
 
 typedef enum {
     STATE_GREEN,       // MovementPhaseState_permissive_Movement_Allowed,
@@ -43,18 +43,18 @@ typedef enum {
     TIME_MIN_RED        = 2000,
     TIME_MIN_PEDESTRIAN = 5000, 
     TIME_MIN_EMERGENCY  = 12000
-} Time_min;
+} TimeMin;
 
 
 typedef struct {
     State state;
     Time time;
-    Time_min timeMin;
-    LedPin pin;
+    TimeMin timeMin;
+    Pin pin;
     State (*stateFunction)();
 } Operation;
 
-void lightLed(LedPin ledColor);
+void lightLed(Pin ledColor);
 State greenState();
 State yellowState();
 State redState();

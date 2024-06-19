@@ -40,8 +40,8 @@ int main(int argc, char **argv)
     // ----------/ CODIGO TESTE ----------------
 
     setup();
-    unsigned char f_priority = 0;
-    unsigned char f_emergency = 0;
+    volatile unsigned char f_priority = 0;
+    volatile unsigned char f_emergency = 0;
     unsigned char f_pedestrianWaiting = 0;
     unsigned int currentTime = 0;
     unsigned int waitTime = 0;
@@ -58,30 +58,41 @@ int main(int argc, char **argv)
 
     unsigned int miliSecOfHour = getMillisecondsOfHour();
     unsigned int firstTime = millis();
-    unsigned int stateLastTime = firstTime;
-    unsigned int messageLastTime = firstTime;
-    unsigned int emergencyLastTime = firstTime;
-    unsigned int startTime = firstTime;
+    unsigned int stateLastTime = 0;
+    unsigned int messageLastTime = 0;
+    unsigned int emergencyLastTime = 0;
+    unsigned int startTime = 0;
     
     while(1){
 
         currentTime = millis() - firstTime;
         
         /*  Emergency Vehicle Detected */
-        if (emergencyBtn || (f_emergency && (currentTime - emergencyLastTime >= 500))) {
-            DEBUG_PRINT("EMERGENCY PRESSED\n");
+        if (emergencyBtn){
+            
             if (f_emergency == 0){
-                emergencyBtn = false;
+                DEBUG_PRINT("EMERGENCY PRESSED\n");
+                //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
+                emergencyBtn = 0;
                 stateLastTime = currentTime;
                 f_emergency = 1;
                 startTime = currentTime;
+                currentState = STATE_EMERGENCY;
             }
-            else if (f_emergency && currentTime > stateLastTime){
+        }
+        if(f_emergency){
+            
+            if (f_emergency && ((currentTime - stateLastTime) > operations[STATE_EMERGENCY].time)){
+                DEBUG_PRINT("EMERGENCY OUT\n");
+                //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
                 f_emergency = 0;
-                stateLastTime = currentTime;
+                stateLastTime = 0;
                 currentState = nextState;
+                emergencyLastTime = 0;
             } 
-            else{
+            else if (f_emergency && (currentTime - emergencyLastTime >= 500)){ 
+                DEBUG_PRINT("EMERGENCY FUNCTION CALL\n");
+                //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
                 nextState = operations[STATE_EMERGENCY].stateFunction();
                 emergencyLastTime = currentTime;
             }
@@ -92,24 +103,31 @@ int main(int argc, char **argv)
             if ((currentState != STATE_EMERGENCY) && (currentTime - stateLastTime >= operations[currentState].timeMin)){
                 
                 DEBUG_PRINT("PEDESTRIAN STATE\n");
+                //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
                 
                 currentState = STATE_PEDESTRIAN;
                 f_priority = 1;
                 f_pedestrianWaiting = 0;
             }
             else{
-                DEBUG_PRINT("PEDESTRIAN BUGG STATE\n");
-                f_pedestrianWaiting = 1;
+                if (!f_pedestrianWaiting){
+                    DEBUG_PRINT("PEDESTRIAN BUGG STATE\n");
+                    //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
+                    f_pedestrianWaiting = 1;
+                }
             }
-            pedestrianBtn = false;
+            pedestrianBtn = 0;
         }
 
         /*  States Change if nothing happen ( Green - Yellow - Red ) */
-        if ((currentTime - stateLastTime >= waitTime) || f_priority ) {
-            DEBUG_PRINT("Current Time: %d\n", currentTime);
-            DEBUG_PRINT("State: %d\n", currentState);
+        else if ((currentTime - stateLastTime >= waitTime) || f_priority ) {
+            
             if (f_priority == 0)
                 currentState = nextState;
+            DEBUG_PRINT("STATE MACHINE\n");
+            DEBUG_PRINT("Current Time: %d\n", currentTime);
+            //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
+
             nextState = operations[currentState].stateFunction();
             waitTime  = operations[currentState].time;
             startTime = currentTime;
@@ -125,28 +143,35 @@ int main(int argc, char **argv)
         */
 
         
-        // if ((currentTime - messageLastTime >= 1000)) {
+        if ((currentTime - messageLastTime >= 1000)) {
             
-        //     if (lastState != currentState){
+            static unsigned int m_startTime = 0;
+            static State m_state = 20;
 
-        //         M_SET_INTERSECTION(intersectionArray, 0);
-        //         M_INCREMENT_COUNT(intersectionArray);
-        //         M_SET_STATE(intersectionArray, currentState);
-        //         M_SET_CURR_TIME(currTimeSpat);
-        //         M_SET_MAX_TIME(intersectionArray, (miliSecOfHour + startTime + operations[currentState].time)/100);
-        //         M_SET_MIN_TIME(intersectionArray, (miliSecOfHour + startTime + operations[currentState].timeMin)/100);
-        //         M_SET_START_TIME(intersectionArray, (miliSecOfHour + startTime)/100);
-        //         memset(buffer, 0, sizeof(buffer));
-        //         encodeBuffer(&spatMessage, buffer, sizeof(buffer), &bytes_enc);
-        //         sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
-        //         //printMessage(&spatMessage);
-        //     }
-        //     else{
-        //         sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
-        //     }
+            if ((m_startTime != startTime || m_state != currentState)){
+                m_startTime = startTime;
+                m_state = currentState;
+                DEBUG_PRINT("Current Time: %d\n", currentTime);
+                M_SET_INTERSECTION(intersectionArray, 0);
+                M_INCREMENT_COUNT(intersectionArray);
+                M_SET_STATE(intersectionArray, currentState);
+                M_SET_CURR_TIME(currTimeSpat);
+                M_SET_MAX_TIME(intersectionArray, (miliSecOfHour + startTime + operations[currentState].time)/100);
+                M_SET_MIN_TIME(intersectionArray, (miliSecOfHour + startTime + operations[currentState].timeMin)/100);
+                M_SET_START_TIME(intersectionArray, (miliSecOfHour + startTime)/100);
+                memset(buffer, 0, sizeof(buffer));
+                encodeBuffer(&spatMessage, buffer, sizeof(buffer), &bytes_enc);
+                //sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
+                
+                //printStats(currentState,currentTime,stateLastTime,messageLastTime,emergencyLastTime,startTime);
+            }
+            else{
+                sendMessage(sockfd, &broadcast_addr, buffer, bytes_enc);
+                printMessage(&spatMessage);
+            }
             
-        //     messageLastTime  = currentTime;            
-        // }
+            messageLastTime  = currentTime;            
+        }
 
         usleep(1000);
         //DEBUG_PRINT("Time: %d\n", currentTime);
@@ -161,4 +186,30 @@ int main(int argc, char **argv)
     free(intersectionArray);
 
     return 0;
+}
+
+
+const char *stateNames[STATES_NUMBER] = {
+    "STATE_GREEN",
+    "STATE_YELLOW",
+    "STATE_RED",
+    "STATE_PEDESTRIAN",
+    "STATE_EMERGENCY"
+};
+
+void printStats(State currentState, unsigned int currentTime, unsigned int stateLastTime, 
+unsigned int messageLastTime, unsigned int emergencyLastTime, unsigned int startTime){
+
+    if (currentState >= 0 && currentState < STATES_NUMBER) {
+        printf("State: %s\n", stateNames[currentState]);
+    } else {
+        printf("State: Unknown\n");
+    }
+
+    printf("currentTime      : %d\n", currentTime );
+    printf("stateLastTime    : %d\n", stateLastTime);
+    printf("messageLastTime  : %d\n", messageLastTime);
+    printf("emergencyLastTime: %d\n", emergencyLastTime);
+    printf("startTime        : %d\n", startTime);
+
 }

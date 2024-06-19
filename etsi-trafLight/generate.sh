@@ -5,10 +5,6 @@ rm *.c *.h *.o
 
 asn1c -gen-PER -pdu=auto -fincludes-quoted -fcompound-names ./asn1/SPATEM-PDU-Descriptions.asn ./asn1/ITS-Container.asn ./asn1/ISO-19091.asn ./asn1/ISO-24534-3.asn
 
-#find . -type l | xargs rm 
-
-#make -f converter-example.mk
-
 mkdir -p asn1-source
 mkdir -p asn1-header
 

@@ -1,8 +1,8 @@
 #include "../inc/fsm.h"
 #include <time.h>
 
-volatile bool pedestrianBtn = false;
-volatile bool emergencyBtn  = false;
+volatile bool pedestrianBtn = 0;
+volatile bool emergencyBtn  = 0;
 const unsigned int debounceDelay = 50;
 
 Operation operations[STATES_NUMBER] = {
@@ -27,7 +27,7 @@ void pedestrianISR(void) {
     static unsigned int lastPedestrianPress = 0;
     unsigned int currentTime = millis();
     if (currentTime - lastPedestrianPress > debounceDelay) {
-        pedestrianBtn = true;
+        pedestrianBtn = 1;
         lastPedestrianPress = currentTime;
     }
 }
@@ -36,7 +36,7 @@ void emergencyISR(void) {
     static unsigned int lastEmergencyPress = 0;
     unsigned int currentTime = millis();
     if (currentTime - lastEmergencyPress > debounceDelay) {
-        emergencyBtn = true;
+        emergencyBtn = 1;
         lastEmergencyPress = currentTime;
     }
 }
@@ -72,13 +72,14 @@ void clearLeds() {
     #endif
 }
 
-void lightLed(LedPin ledColor) {
+void lightLed(Pin ledColor) {
     #if RASPBERRY
         digitalWrite(ledColor, HIGH);
     #endif
 }
 
 State greenState() {
+    printf("green state in\n");
     clearLeds();
     lightLed(LED_GREEN);
     return STATE_YELLOW;
@@ -98,10 +99,9 @@ State redState() {
 
 State emergencyState() {
     static unsigned char state = 1;
-    if (state)
-        clearLeds();
-    else
-        lightLed(LED_RED);
+    
+    state ? clearLeds() : lightLed(LED_RED);
+    state = !state;
 
     return STATE_GREEN;
 }

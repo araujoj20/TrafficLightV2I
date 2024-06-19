@@ -790,16 +790,12 @@ void printDisplay(SPATEM_t *decSpat) {
     sprintf(arPrt[5], "T Min: %2dh%02dm%02ds", hours, (int)(minTime / 600), (int)((minTime / 10) % 60));
     sprintf(arPrt[6], "T Max: %2dh%02dm%02ds", hours, (int)(maxTime / 600), (int)((maxTime / 10) % 60));
     sprintf(arPrt[7], "Msg Count: %ld", decSpat->spat.intersections.list.array[0]->revision);
-    sprintf(arPrt[8], " ");
 
-    ptrText[0] = '\0';
     for (int i = 0; i < MAX_DISP_LINES; i++) {
         strcat(ptrText, arPrt[i]);
         strcat(ptrText, "\n");
     }
 
-    //printf("%s", ptrText); 
     ssd1306_drawString(ptrText); 
     ssd1306_display(); 
-    // delay(3000);
 }

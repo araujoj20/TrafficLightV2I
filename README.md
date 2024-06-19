@@ -13,4 +13,6 @@
 
 `sudo nmcli dev wifi list`
 
+`sudo nmcli connection show`
+
 `sudo nmcli dev wifi connect <wifi_network_name> password <wifi_password>`

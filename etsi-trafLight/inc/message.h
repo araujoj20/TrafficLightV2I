@@ -31,8 +31,8 @@
 #define M_SET_INTERSECTION(inters, index)   (inters = spatMessage.spat.intersections.list.array[(index)])
 #define M_SET_STATE(inters, state)          ((inters)->states.list.array[0]->state_time_speed.list.array[0]->eventState = (state))
 #define M_SET_MAX_TIME(inters, MTime)       (*(inters)->states.list.array[0]->state_time_speed.list.array[0]->timing->maxEndTime = (MTime))
-#define M_SET_MIN_TIME(inters, mTime)       ((inters)->states.list.array[0]->state_time_speed.list.array[0]->timing->minEndTime = (mTime))
-#define M_SET_START_TIME(inters, sTime)     (*(inters)->states.list.array[0]->state_time_speed.list.array[0]->timing->startTime = (sTime))
+#define M_SET_MIN_TIME(inters, mTime)       ((inters)->states.list.array[0]->state_time_speed.list.array[0]->timing->minEndTime  = (mTime))
+#define M_SET_START_TIME(inters, sTime)     (*(inters)->states.list.array[0]->state_time_speed.list.array[0]->timing->startTime  = (sTime))
 
 
 #define M_INCREMENT_COUNT(inters)           ((inters)->revision = ((inters)->revision + 1) % 127)

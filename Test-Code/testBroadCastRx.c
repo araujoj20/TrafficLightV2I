@@ -52,10 +52,19 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    char in_buffer[MAX_MSG_SIZE];
+    unsigned char in_buffer[MAX_MSG_SIZE];
     while(1) {
         receiveMessage(sockfd, in_buffer, &client_addr);
-        printf("Received message: %s\n", in_buffer);
+        
+        printf("-------------------------------------------------------------------------\n");
+        printf("Bytes received: %ld\n", 159);
+        for (uint16_t index = 0; index < 159; index++){
+            printf("0x%02x ", in_buffer[index]);
+            index++;
+        }
+        printf("\n");
+        printf("------------------------------------------------------------------------\n");
+
     }
 
     close(sockfd);
